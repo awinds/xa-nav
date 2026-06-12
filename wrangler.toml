@@ -6,7 +6,7 @@ functions = "./functions"
 # account_id = ""
 
 d1_databases = [
-  { binding = "D1", database_name = "xa_nav" }
+  { binding = "db", database_name = "xa-nav-db" }
 ]
 
 [ai]

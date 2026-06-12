@@ -1,8 +1,16 @@
+中文 | [English](README_en.md)
+
 # XA Nav
 
 XA Nav 是一个基于 React、Vite、Cloudflare Pages Functions 和 Cloudflare D1 的书签导航页面，支持公开导航、管理员后台、智能填充、友情链接、备份恢复和多语言界面。
 
-English documentation: [README_en.md](README_en.md)
+作者博客：[https://www.xiaoa.me](https://www.xiaoa.me)
+
+如果项目对你有所帮助，麻烦给个 `Star` ⭐。
+
+![](screenshot.png)
+
+![](screenshot2.png)
 
 ## 功能特性
 
@@ -15,7 +23,6 @@ English documentation: [README_en.md](README_en.md)
 - 登录支持图片验证码和 Cloudflare Turnstile
 - 登录 Cookie 有效期可在后台按小时配置
 - 网站名称、Logo URL、页脚版权、默认语言和 Favicon API 接口前缀可在后台配置
-- 默认 Logo 来自 [src/images/logo.png](src/images/logo.png)
 - 网址智能填充会优先保存网站自身图标；未获取到图标时留空，显示时使用 Favicon API 前缀拼接域名
 - 可通过后台开关启用 Workers AI，在无法获取描述或标签时自动生成 Meta 信息，默认关闭
 - 支持 JSON 备份导入导出
@@ -76,12 +83,10 @@ http://localhost:8788/api/categories
 
 ### 4. 初始化 D1 数据库
 
-先使用 [db/schema.sql](db/schema.sql) 创建 D1 表结构。表结构存在后，应用在首次读取系统配置或分类时会自动写入默认配置和默认分类，不再需要访问 seed 接口。
-
-本地示例：
+先使用 [db/schema.sql](db/schema.sql) 创建 D1 表结构。表结构存在后，应用在首次读取系统配置或分类时会自动写入默认配置和默认分类。
 
 ```bash
-npx wrangler d1 execute xa_nav --local --file db/schema.sql
+npx wrangler d1 execute xa-nav-db --local --file db/schema.sql
 ```
 
 默认管理员账号来自环境变量，未配置时为：
@@ -91,7 +96,11 @@ npx wrangler d1 execute xa_nav --local --file db/schema.sql
 密码：admin123
 ```
 
-`AUTH_SECRET` 可不配置；未配置时程序会使用内置强随机默认值。生产环境如需自定义登录签名密钥，可在 Cloudflare Pages 环境变量中覆盖。
+### 3. 导入示例数据
+
+```bash
+npx wrangler d1 execute xa-nav-db --local --file db/seed.sql
+```
 
 ## 构建
 
@@ -113,30 +122,31 @@ npm run preview
 
 ## Cloudflare Pages 部署
 
-### 1. 创建 D1 数据库
+### 1. Fork本项目
+`Fock` 本项目同时请帮忙点个 `Star` ⭐
+
+### 2. 创建 D1 数据库
 
 在 Cloudflare 控制台创建 D1 数据库，例如：
 
 ```text
-xa_nav
+xa-nav-db
+```
+*或* 脚本创建：
+```bash
+# 创建 D1 数据库
+wrangler d1 create xa-nav-db
 ```
 
-然后在 Cloudflare Pages 项目中绑定 D1：
-
-```text
-Binding name: D1
-Database: xa_nav
+### 3: 导入数据表结构
+手动复制 `db/schema.sql` (*4张表*) 在 D1 数据库控制台导入 
+*或* 脚本导入：
+```bash
+# 使用架构和默认数据初始化数据库
+wrangler d1 execute xa-nav-db --file=db/schema.sql
 ```
 
-如果通过 Wrangler 管理，请在 [wrangler.toml](wrangler.toml) 中确认 D1 绑定：
-
-```toml
-d1_databases = [
-  { binding = "D1", database_name = "xa_nav" }
-]
-```
-
-### 2. 配置 Workers AI 绑定（可选）
+### 4. 配置 Workers AI 绑定（可选）
 
 Workers AI 用于网址智能填充缺失描述或标签时生成内容，后台开关默认关闭。
 
@@ -149,38 +159,27 @@ binding = "AI"
 
 如果不使用 AI Meta 功能，可以保持后台开关关闭。
 
-### 3. Cloudflare Pages 构建配置
+### 5. Cloudflare Pages 构建配置
+1. 前往 **Cloudflare 控制台** > **Workers和Pages** > **创建应用程序** > **想要部署 Pages？开始使用**
+2. 连接你的 Git 仓库
+3. 配置 **构建设置**：
+   - **框架预设**: `None`
+   - **构建命令**: `npm run build`
+   - **构建输出目录**: `dist`（当前目录）
+   - **根目录**: `/`（仓库根目录）
 
-在 Cloudflare Pages 项目中配置：
-
-```text
-Build command: npm run build
-Build output directory: dist
-Functions directory: functions
-```
-
-### 4. 配置环境变量
-
-需要配置以下环境变量：
-
+### 6. 配置环境变量
+1. 前往 **Cloudflare 控制台** > **Workers和Pages** > **xa-nav**
+2. 前往 **设置** > **变量和密钥** 
 - `ADMIN_USER`：后台管理员账号，未配置时为 `admin`
 - `ADMIN_PASSWORD`：后台管理员密码，未配置时为 `admin123`
+- `AUTH_SECRET`：(可选)登录 Cookie 和图片验证码签名密钥
+3. 前往 **设置** > **绑定** 
+4. 添加 **D1数据库**：
+   - **变量名**: `db`
+   - **D1 数据库**: `xa-nav-db`
+5. 导航到 **部署** > **所有部署**，最新的部署... `重试部署`（d1数据库绑定后必须重新部署）
 
-以下环境变量可选，未配置时会使用代码内置强随机默认值：
-
-- `AUTH_SECRET`：登录 Cookie 和图片验证码签名密钥
-
-[wrangler.toml](wrangler.toml) 中的 `[vars]` 仅保留管理员账号密码作为本地开发示例，生产环境建议在 Cloudflare Pages 控制台中配置变量。
-
-### 5. 初始化生产数据库
-
-部署前或部署后，在 Cloudflare D1 中执行 [db/schema.sql](db/schema.sql) 创建表结构。表结构创建完成后，首次访问站点或后台接口时会自动补齐默认系统配置和默认分类。
-
-生产环境可通过 Cloudflare 控制台的 D1 SQL 页面执行 [db/schema.sql](db/schema.sql)，也可以使用 Wrangler：
-
-```bash
-npx wrangler d1 execute xa_nav --remote --file db/schema.sql
-```
 
 ## 系统配置说明
 

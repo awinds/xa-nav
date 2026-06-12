@@ -381,10 +381,10 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   }, []);
 
   const categoryTree = useMemo(() => formatCategoryTree(categories), [categories]);
+  const defaultCategory = useMemo(() => categoryTree.find((c) => c.isDefault), [categoryTree]);
   const defaultCatId = useMemo(() => {
-    const defaultCat = categories.find((c) => c.isDefault);
-    return defaultCat ? String(defaultCat.id) : '';
-  }, [categories]);
+    return defaultCategory ? String(defaultCategory.id) : '';
+  }, [defaultCategory]);
   const quickAddCategoryOptions = useMemo(() => {
     const flatten = (items, level = 0) => items.flatMap((item) => {
       const displayName = item.isDefault ? t(lang, 'category.default') : item.name;
@@ -418,7 +418,6 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
 
   // 有书签的顶级分类 + 默认分类（未分类书签归入）
   const visibleCats = useMemo(() => {
-    const defaultCat = categoryTree.find((c) => c.isDefault);
     const normalCats = categoryTree.reduce((acc, cat) => {
       if (cat.isDefault) return acc;
       const childIds = (cat.children || []).map((c) => Number(c.id));
@@ -432,13 +431,18 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     // 未归类（无 categoryId 或归属默认分类）
     const defaultItems = [
       ...(bookmarkIndex.byCategoryId.get(0) || []),
-      ...(defaultCat ? (bookmarkIndex.byCategoryId.get(Number(defaultCat.id)) || []) : []),
+      ...(defaultCategory ? (bookmarkIndex.byCategoryId.get(Number(defaultCategory.id)) || []) : []),
     ];
-    if (defaultCat && defaultItems.length > 0) {
-      return [...normalCats, { ...defaultCat, _defaultItems: defaultItems, _items: defaultItems }];
+    if (defaultCategory && defaultItems.length > 0) {
+      return [...normalCats, { ...defaultCategory, _defaultItems: defaultItems, _items: defaultItems }];
     }
     return normalCats;
-  }, [categoryTree, bookmarkIndex]);
+  }, [categoryTree, bookmarkIndex, defaultCategory]);
+
+  const sidebarCats = useMemo(() => {
+    if (visibleCats.length > 0 || !defaultCategory) return visibleCats;
+    return [{ ...defaultCategory, _defaultItems: [], _items: [] }];
+  }, [visibleCats, defaultCategory]);
 
   const currentSearch = SEARCH_OPTIONS.find((o) => o.key === searchMode) || SEARCH_OPTIONS[0];
   const handleSearch = () => {
@@ -626,7 +630,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
             <div className={`mb-1 px-3 py-2 text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
               {t(lang, 'category.label')}
             </div>
-            {visibleCats.map((cat) => {
+            {sidebarCats.map((cat) => {
               const icon = getCategoryIcon(cat);
               const hasChildren = (cat.children || []).length > 0;
               const isHovered = hoveredCat === cat.id;

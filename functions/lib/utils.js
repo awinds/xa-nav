@@ -117,7 +117,7 @@ export function randomCaptchaCode(length = 5) {
   return result;
 }
 
-export async function ensureDefaultConfig(db) {
+async function ensureDefaultConfig(db) {
   const defaults = [
     ['cookie_max_age', '86400'],
     ['enable_turnstile', '0'],
@@ -137,38 +137,30 @@ export async function ensureDefaultConfig(db) {
   }
 }
 
-export async function ensureDefaultCategory(db) {
-  await ensureDefaultCategoryColumn(db);
-  await ensureCategoryPrivacyColumn(db);
-  await db.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_name ON categories(name)').run();
+async function ensureDefaultCategory(db) {
   await db.prepare('INSERT OR IGNORE INTO categories (name, icon, sort_order, is_default, is_private) VALUES (?, ?, ?, 1, 0)')
     .bind('默认', 'fa-solid fa-folder', 999)
     .run();
-  await ensureDefaultCategoryIcon(db);
 }
 
-export async function ensureDefaultCategoryColumn(db) {
-  try {
-    await db.prepare('ALTER TABLE categories ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0').run();
-  } catch (error) {
-    if (!String(error?.message || error).toLowerCase().includes('duplicate column')) throw error;
-  }
+async function ensureDefaultFriendLink(db) {
+  await db.prepare(`
+    INSERT INTO friend_links (name, icon, description, url, enabled, sort_order)
+    SELECT ?, ?, ?, ?, 1, ?
+    WHERE NOT EXISTS (SELECT 1 FROM friend_links WHERE url = ?)
+  `)
+    .bind('半日闲', '', '偷得浮生半日闲', 'https://www.xiaoa.me', 999, 'https://www.xiaoa.me')
+    .run();
 }
 
-export async function ensureCategoryPrivacyColumn(db) {
-  try {
-    await db.prepare('ALTER TABLE categories ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0').run();
-  } catch (error) {
-    if (!String(error?.message || error).toLowerCase().includes('duplicate column')) throw error;
-  }
-}
+export async function ensureSiteInitialized(db) {
+  const marker = await db.prepare('SELECT value FROM config WHERE key = ?').bind('__site_initialized').first();
+  if (marker?.value === '1') return;
 
-export async function ensureDefaultCategoryIcon(db) {
-  try {
-    await db.prepare("UPDATE categories SET icon = 'fa-solid fa-folder' WHERE is_default = 1 AND (icon IS NULL OR icon = '' OR icon NOT LIKE 'fa-%')").run();
-  } catch (error) {
-    if (!String(error?.message || error).toLowerCase().includes('no such column')) throw error;
-  }
+  await ensureDefaultConfig(db);
+  await ensureDefaultCategory(db);
+  await ensureDefaultFriendLink(db);
+  await db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').bind('__site_initialized', '1').run();
 }
 
 export function getEnvAdmin(env) {

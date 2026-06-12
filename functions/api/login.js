@@ -1,4 +1,4 @@
-import { jsonResponse, parseJson, verifySignedToken, createAuthToken, getEnvAdmin, getAuthSecret, ensureDefaultConfig } from '../lib/utils.js';
+import { jsonResponse, parseJson, verifySignedToken, createAuthToken, getEnvAdmin, getAuthSecret, ensureSiteInitialized } from '../lib/utils.js';
 
 async function verifyCaptcha(token, answer, secret) {
   if (!token || !answer) return false;
@@ -38,8 +38,8 @@ export async function onRequestPost({ request, env }) {
 
     let configRows;
     try {
-      await ensureDefaultConfig(env.D1);
-      configRows = await env.D1.prepare('SELECT key, value FROM config').all();
+      await ensureSiteInitialized(env.db);
+      configRows = await env.db.prepare('SELECT key, value FROM config').all();
     } catch (error) {
       console.error('Config read error:', error);
       return jsonResponse({ success: false, message: '数据库表未创建，请先执行 db/schema.sql 后再访问。' }, 500);

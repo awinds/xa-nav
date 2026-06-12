@@ -1,9 +1,8 @@
-import { jsonResponse, ensureDefaultCategory, isAuthenticated } from '../lib/utils.js';
+import { jsonResponse, isAuthenticated } from '../lib/utils.js';
 
 export async function onRequestGet({ request, env }) {
-  await ensureDefaultCategory(env.D1);
   const authed = await isAuthenticated(request, env);
-  const result = await env.D1.prepare(`
+  const result = await env.db.prepare(`
     SELECT c.id, c.name, c.parent_id AS parentId, c.icon, c.sort_order AS sortOrder,
       c.is_default AS isDefault, c.is_private AS isPrivate
     FROM categories c

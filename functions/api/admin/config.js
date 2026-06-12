@@ -1,4 +1,4 @@
-import { jsonResponse, parseJson, getAuthenticatedAdmin, ensureDefaultConfig } from '../../lib/utils.js';
+import { jsonResponse, parseJson, getAuthenticatedAdmin, ensureSiteInitialized } from '../../lib/utils.js';
 
 async function getAdmin(request, env) {
   return await getAuthenticatedAdmin(request, env);
@@ -18,12 +18,12 @@ function maskConfig(config) {
 }
 
 async function getConfig(env) {
-  const result = await env.D1.prepare('SELECT key, value FROM config').all();
+  const result = await env.db.prepare('SELECT key, value FROM config').all();
   return mapConfig(result);
 }
 
 export async function onRequestGet({ env }) {
-  await ensureDefaultConfig(env.D1);
+  await ensureSiteInitialized(env.db);
   const config = await getConfig(env);
   return jsonResponse({ config: maskConfig(config) });
 }
@@ -32,7 +32,7 @@ export async function onRequestPost({ request, env }) {
   const admin = await getAdmin(request, env);
   if (!admin) return jsonResponse({ success: false, message: '未登录' }, 401);
 
-  await ensureDefaultConfig(env.D1);
+  await ensureSiteInitialized(env.db);
   const body = await parseJson(request);
   const currentConfig = await getConfig(env);
 
@@ -73,7 +73,7 @@ export async function onRequestPost({ request, env }) {
     entries.turnstile_secret = currentSecret;
   }
   for (const [key, value] of Object.entries(entries)) {
-    await env.D1.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').bind(key, value).run();
+    await env.db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').bind(key, value).run();
   }
   return jsonResponse({ success: true, config: maskConfig({ ...currentConfig, ...entries }) });
 }

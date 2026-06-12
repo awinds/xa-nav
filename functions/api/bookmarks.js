@@ -1,9 +1,8 @@
-import { jsonResponse, ensureCategoryPrivacyColumn, isAuthenticated } from '../lib/utils.js';
+import { jsonResponse, isAuthenticated } from '../lib/utils.js';
 
 export async function onRequestGet({ request, env }) {
-  await ensureCategoryPrivacyColumn(env.D1);
   const authed = await isAuthenticated(request, env);
-  const result = await env.D1.prepare(`
+  const result = await env.db.prepare(`
     SELECT b.id, b.title, b.url, b.description, b.favicon, b.tags, b.sort_order AS sortOrder,
       b.category_id AS categoryId, c.name AS categoryName, c.icon AS categoryIcon
     FROM bookmarks b

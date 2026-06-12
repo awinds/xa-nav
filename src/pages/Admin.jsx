@@ -25,6 +25,13 @@ function getFaviconUrl(bookmark, faviconApi = DEFAULT_FAVICON_API) {
   return `${faviconApi || DEFAULT_FAVICON_API}${hostname}`;
 }
 
+function getFriendLinkIconUrl(friendLink, faviconApi = DEFAULT_FAVICON_API) {
+  if (friendLink.icon) return friendLink.icon;
+  const hostname = getBookmarkHostname(friendLink.url);
+  if (!hostname) return '';
+  return `${faviconApi || DEFAULT_FAVICON_API}${hostname}`;
+}
+
 function FormField({ label, children }) {
   return (
     <div className="space-y-1.5">
@@ -536,7 +543,7 @@ function CategoriesSection({ categories, onReload, showToast }) {
 }
 
 // ─── 友情链接管理 ──────────────────────────────────────────────────────────────
-function FriendLinksSection({ showToast }) {
+function FriendLinksSection({ showToast, faviconApi = DEFAULT_FAVICON_API }) {
   const [friendLinks, setFriendLinks] = useState([]);
   const [form, setForm] = useState(EMPTY_FRIEND_LINK);
   const [editing, setEditing] = useState(null);
@@ -667,7 +674,7 @@ function FriendLinksSection({ showToast }) {
                 <tr key={item.id} className="group transition hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {item.icon ? <FaviconImage src={item.icon} className="h-4 w-4 rounded object-contain shrink-0" /> : <i className="fa-solid fa-link text-xs text-slate-300" />}
+                      <FaviconImage src={getFriendLinkIconUrl(item, faviconApi)} className="h-4 w-4 rounded object-contain shrink-0" />
                       <span className="font-medium text-slate-800 truncate max-w-[140px]">{item.name}</span>
                     </div>
                   </td>
@@ -1037,7 +1044,7 @@ export default function Admin({ admin, lang = 'zh', siteLogo = '', faviconApi = 
         ) : activeSection === 'categories' ? (
           <CategoriesSection categories={categories} onReload={loadCategories} showToast={showToast} />
         ) : activeSection === 'friendLinks' ? (
-          <FriendLinksSection showToast={showToast} />
+          <FriendLinksSection showToast={showToast} faviconApi={faviconApi} />
         ) : activeSection === 'backup' ? (
           <BackupSection showToast={showToast} />
         ) : (

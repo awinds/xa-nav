@@ -125,7 +125,7 @@ export async function onRequestGet({ request, env }) {
     return jsonResponse({ success: false, message: '无效的 URL' }, 400);
   }
 
-  const config = await getConfigMap(env.D1);
+  const config = await getConfigMap(env.db);
   const enableAiMeta = config.enable_ai_meta === '1';
 
   try {

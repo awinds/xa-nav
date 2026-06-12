@@ -1,33 +1,40 @@
+[中文](README.md) | English
+
 # XA Nav
 
-XA Nav is a bookmark/navigation web app built with React, Vite, Cloudflare Pages Functions, and Cloudflare D1. It includes a public navigation homepage, an admin panel, smart site info autofill, friend links, backup/restore, and multilingual UI.
+XA Nav is a bookmark navigation page based on React, Vite, Cloudflare Pages Functions, and Cloudflare D1. It supports a public navigation homepage, admin dashboard, smart autofill, friend links, backup/restore, and multilingual UI.
 
-中文文档: [README.md](README.md)
+Author's blog: [https://www.xiaoa.me](https://www.xiaoa.me)
+
+If this project helps you, please give it a `Star` ⭐.
+
+![](screenshot.png)
+
+![](screenshot2.png)
 
 ## Features
 
-- Homepage with local search, external search, category sidebar, parent/child category tabs, and bookmark cards
-- Admin-only quick add bookmark button on the homepage, with a modal for adding bookmarks and smart site info autofill
-- Admin panel for bookmark management, category management, friend link management, system settings, and backup/restore
-- Categories with Font Awesome icons, sorting, parent/child structure, and private visibility
-- Private categories are only visible after admin login; logged-out users cannot fetch private categories or their bookmarks
-- Friend links with site name, icon, description, URL, sort order, and enabled state; displayed at the bottom of the homepage
+- Homepage supports local search, external search, category sidebar, parent/child category tabs, and bookmark cards
+- After admin login, a quick-add bookmark button appears in the lower-right corner of the homepage; bookmarks can be added in a modal with smart site information autofill
+- Admin dashboard supports bookmark management, category management, friend link management, system settings, and backup/restore
+- Categories support Font Awesome icons, sorting, parent/child hierarchy, and private categories
+- Private categories are only shown after admin login; logged-out users cannot retrieve private categories or their bookmarks
+- Friend links support site name, icon, description, URL, sorting, and enabled status, and are displayed at the bottom of the homepage
 - Login supports image captcha and Cloudflare Turnstile
-- Login cookie lifetime can be configured in hours from the admin panel
-- Site name, Logo URL, footer copyright, default language, and Favicon API prefix are configurable
-- Default logo is bundled from [src/images/logo.png](src/images/logo.png)
-- Smart bookmark autofill stores the site's own favicon when found; if no favicon is found, the stored value stays empty and the UI falls back to the configured Favicon API prefix plus hostname
-- Optional Workers AI fallback for generating missing meta description or tags; disabled by default
-- JSON backup import/export
-- Browser bookmark HTML import/export
-- Chinese and English UI
+- Login cookie lifetime can be configured by hour in the admin dashboard
+- Site name, Logo URL, footer copyright, default language, and Favicon API prefix can be configured in the admin dashboard
+- Smart bookmark autofill prioritizes saving the site's own icon; if no icon is found, it stays empty, and the UI uses the Favicon API prefix plus the domain when displaying it
+- Workers AI can be enabled from the admin dashboard to automatically generate Meta information when description or tags cannot be retrieved; it is disabled by default
+- Supports JSON backup import/export
+- Supports browser bookmark HTML file import/export
+- Supports Chinese and English UI
 
 ## Tech Stack
 
 - Frontend: React 18, React Router, Vite, Tailwind CSS
 - Backend: Cloudflare Pages Functions
 - Database: Cloudflare D1
-- Optional services: Cloudflare Turnstile, Workers AI
+- Optional capabilities: Cloudflare Turnstile, Workers AI
 
 ## Local Development
 
@@ -37,7 +44,7 @@ XA Nav is a bookmark/navigation web app built with React, Vite, Cloudflare Pages
 npm install
 ```
 
-### 2. Start the frontend dev server
+### 2. Start the frontend development server
 
 ```bash
 npm run dev
@@ -49,15 +56,15 @@ Default frontend URL:
 http://localhost:5173
 ```
 
-Vite proxies `/api` requests to the local Cloudflare Pages Functions service:
+Vite is configured to proxy `/api` to the local Cloudflare Pages Functions service:
 
 ```text
 http://localhost:8788
 ```
 
-### 3. Start Cloudflare Pages Functions locally
+### 3. Start the local Cloudflare Pages Functions service
 
-Cloudflare Pages Functions are started through Wrangler. Build the frontend first, then start Pages dev:
+Cloudflare Pages Functions must be started through Wrangler. It is recommended to build the frontend first, then start Pages dev:
 
 ```bash
 npm run build
@@ -70,28 +77,30 @@ Example API URL:
 http://localhost:8788/api/categories
 ```
 
-Frontend requests to `/api/*` are proxied to this service by Vite.
+When the frontend accesses `/api/*`, Vite proxies the request to this service.
 
-If you change backend API code under [functions/](functions/), restart Wrangler Pages dev to avoid an old process continuing to serve stale logic.
+If you modify backend API code under [functions/](functions/), it is recommended to restart Wrangler Pages dev to avoid the old process continuing to serve old logic.
 
 ### 4. Initialize the D1 database
 
-Create the D1 table structure with [db/schema.sql](db/schema.sql) first. Once the tables exist, the app automatically inserts the default config and default category on the first config or category API access. The seed endpoint is no longer needed.
-
-Local example:
+First use [db/schema.sql](db/schema.sql) to create the D1 table structure. After the table structure exists, the application automatically writes the default configuration and default category when it first reads system configuration or categories.
 
 ```bash
-npx wrangler d1 execute xa_nav --local --file db/schema.sql
+npx wrangler d1 execute xa-nav-db --local --file db/schema.sql
 ```
 
-The default admin account comes from environment variables. If not configured, the fallback is:
+The default admin account comes from environment variables. If not configured, it is:
 
 ```text
 Username: admin
 Password: admin123
 ```
 
-`AUTH_SECRET` is optional. If it is not configured, the app uses a built-in strong random default. You can override it through Cloudflare Pages environment variables in production.
+### 3. Import sample data
+
+```bash
+npx wrangler d1 execute xa-nav-db --local --file db/seed.sql
+```
 
 ## Build
 
@@ -99,13 +108,13 @@ Password: admin123
 npm run build
 ```
 
-Build output directory:
+Build output is generated in:
 
 ```text
 dist
 ```
 
-Preview the production build locally:
+Preview the build output locally:
 
 ```bash
 npm run preview
@@ -113,112 +122,109 @@ npm run preview
 
 ## Cloudflare Pages Deployment
 
-### 1. Create a D1 database
+### 1. Fork this project
+
+When you `Fork` this project, please also give it a `Star` ⭐.
+
+### 2. Create a D1 database
 
 Create a D1 database in the Cloudflare dashboard, for example:
 
 ```text
-xa_nav
+xa-nav-db
 ```
 
-Bind it to the Cloudflare Pages project:
+*Or* create it with a script:
 
-```text
-Binding name: D1
-Database: xa_nav
+```bash
+# Create D1 database
+wrangler d1 create xa-nav-db
 ```
 
-If you manage bindings through Wrangler, confirm the D1 binding in [wrangler.toml](wrangler.toml):
+### 3. Import the table structure
 
-```toml
-d1_databases = [
-  { binding = "D1", database_name = "xa_nav" }
-]
+Manually copy `db/schema.sql` (*4 tables*) and import it in the D1 database console.
+
+*Or* import it with a script:
+
+```bash
+# Initialize the database with schema and default data
+wrangler d1 execute xa-nav-db --file=db/schema.sql
 ```
 
-### 2. Configure Workers AI binding (optional)
+### 4. Configure Workers AI binding (optional)
 
-Workers AI is used only when smart bookmark autofill cannot get a description or tags. The feature is disabled by default in the admin panel.
+Workers AI is used to generate content when smart bookmark autofill cannot retrieve a missing description or tags. The admin switch is disabled by default.
 
-[wrangler.toml](wrangler.toml) already includes an example binding:
+[wrangler.toml](wrangler.toml) already contains a binding example:
 
 ```toml
 [ai]
 binding = "AI"
 ```
 
-If you do not need AI meta generation, keep the admin switch disabled.
+If you do not use the AI Meta feature, you can keep the admin switch disabled.
 
-### 3. Cloudflare Pages build settings
+### 5. Cloudflare Pages build settings
 
-Configure the Pages project with:
+1. Go to **Cloudflare Dashboard** > **Workers & Pages** > **Create application** > **Want to deploy Pages? Get started**
+2. Connect your Git repository
+3. Configure **Build settings**:
+   - **Framework preset**: `None`
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist` (current directory)
+   - **Root directory**: `/` (repository root)
 
-```text
-Build command: npm run build
-Build output directory: dist
-Functions directory: functions
-```
+### 6. Configure environment variables
 
-### 4. Configure environment variables
+1. Go to **Cloudflare Dashboard** > **Workers & Pages** > **xa-nav**
+2. Go to **Settings** > **Variables and Secrets**
+- `ADMIN_USER`: admin username, defaults to `admin` if not configured
+- `ADMIN_PASSWORD`: admin password, defaults to `admin123` if not configured
+- `AUTH_SECRET`: (optional) signing secret for login cookies and image captcha
+3. Go to **Settings** > **Bindings**
+4. Add **D1 database**:
+   - **Variable name**: `db`
+   - **D1 database**: `xa-nav-db`
+5. Go to **Deployments** > **All deployments**, then `Retry deployment` for the latest deployment (you must redeploy after binding the D1 database)
 
-Required variables:
+## System Configuration
 
-- `ADMIN_USER`: admin username. Defaults to `admin` if not configured.
-- `ADMIN_PASSWORD`: admin password. Defaults to `admin123` if not configured.
-
-Optional variables. If not configured, the app uses a built-in strong random default:
-
-- `AUTH_SECRET`: signing secret for login cookies and image captcha tokens.
-
-The `[vars]` section in [wrangler.toml](wrangler.toml) only keeps the admin username and password as a local development example. For production, configure variables in the Cloudflare Pages dashboard if you need to override the defaults.
-
-### 5. Initialize the production database
-
-Before or after deployment, execute [db/schema.sql](db/schema.sql) in Cloudflare D1 to create the table structure. After the tables exist, the first site or admin API access automatically inserts the default system config and default category.
-
-You can run [db/schema.sql](db/schema.sql) from the Cloudflare dashboard D1 SQL page, or use Wrangler:
-
-```bash
-npx wrangler d1 execute xa_nav --remote --file db/schema.sql
-```
-
-## System Settings
-
-The admin panel system settings can manage:
+The admin dashboard “System Configuration” page can maintain:
 
 - Site name
 - Site description
 - Logo URL
 - Footer copyright
 - Default language
-- Login cookie lifetime in hours
+- Login cookie lifetime (hours)
 - Image captcha switch
 - Cloudflare Turnstile switch, Site Key, and Secret Key
 - Favicon API prefix
-- AI meta generation switch
+- AI Meta switch
 
 Notes:
 
-- Turnstile Site Key and Secret Key are maintained in the admin panel. The Secret Key is never returned in plaintext by the config API.
-- If Turnstile is not fully configured, the login page will not show Turnstile and the backend will not require Turnstile verification.
-- If Logo URL is empty, the bundled default logo is used.
-- The Favicon API prefix is concatenated directly with the hostname without protocol, for example:
+- Turnstile Site Key and Secret Key are maintained in the admin dashboard; the Secret Key is never returned in plaintext by the configuration API
+- When Turnstile is not fully configured, the login page does not display Turnstile and the backend does not enforce Turnstile verification
+- If Logo URL is empty, the built-in default Logo is used
+- The Favicon API prefix is directly concatenated with the domain after removing the protocol, for example:
 
 ```text
 https://faviconsnap.com/api/favicon?url= + www.v2ex.com
 https://icon.horse/icon/ + www.v2ex.com
 ```
 
-- "AI Meta" is disabled by default. Even when enabled, the app first uses the site's own meta data and only calls Workers AI when description or tags are missing.
+- “Enable AI Meta” is disabled by default; even when enabled, the app prioritizes the site's own Meta data and only calls Workers AI when description or tags cannot be retrieved
 
-## D1 Tables
+## D1 Table Structure
 
-Main tables:
+Main data tables:
 
-- `config`: platform configuration, including site title, logo, footer copyright, Favicon API, AI Meta switch, captcha, Turnstile, default language, and more
-- `categories`: categories with parent/child structure, default category, private category, and Font Awesome icon support
-- `bookmarks`: bookmarks with favicon, sort order, tags, and enabled state
-- `friend_links`: friend links with site icon, description, URL, sort order, and enabled state
+- `config`: platform configuration items, including site title, Logo, footer copyright, Favicon API, AI Meta switch, captcha, Turnstile, default language, and more
+- `categories`: category directory, supporting parent/child categories, default category, private categories, and Font Awesome icons
+- `bookmarks`: URL bookmarks, supporting Favicon, sorting, tags, and enabled status
+- `friend_links`: friend links, supporting site icon, description, URL, sorting, and enabled status
 
 ## Common Commands
 
@@ -232,24 +238,24 @@ npm run dev
 # Build frontend
 npm run build
 
-# Preview production build locally
+# Preview build output locally
 npm run preview
 
-# Start Cloudflare Pages Functions locally
+# Start Cloudflare Pages Functions local service
 npx wrangler pages dev dist --port 8788
 
-# Test remote Cloudflare resources such as D1 / Workers AI
+# Test remote D1 / Workers AI and other Cloudflare resources if needed
 npx wrangler pages dev dist --port 8788 --remote
 ```
 
-## Directory Structure
+## Directory Description
 
 ```text
-src/                 Frontend source
+src/                 Frontend source code
 src/pages/           Page components
-src/lib/             Frontend utilities and i18n
+src/lib/             Frontend utilities and internationalization
 src/images/          Static image assets
-functions/           Cloudflare Pages Functions
+functions/           Cloudflare Pages Functions APIs
 functions/api/       API routes
 functions/lib/       Backend shared utilities
 ```

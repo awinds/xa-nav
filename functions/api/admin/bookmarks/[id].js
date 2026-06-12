@@ -11,9 +11,9 @@ export async function onRequestPut({ request, env, params }) {
   const body = await parseJson(request);
   const { title, url, description, favicon, categoryId, sortOrder = 0, tags = '', enabled = 1 } = body;
   if (!title || !url) return jsonResponse({ success: false, message: '标题和链接不能为空' }, 400);
-  await env.D1.prepare('UPDATE bookmarks SET title=?, url=?, description=?, favicon=?, category_id=?, sort_order=?, tags=?, enabled=? WHERE id=?')
+  await env.db.prepare('UPDATE bookmarks SET title=?, url=?, description=?, favicon=?, category_id=?, sort_order=?, tags=?, enabled=? WHERE id=?')
     .bind(title, url, description || '', favicon || '', categoryId || null, sortOrder, tags, enabled ? 1 : 0, id).run();
-  const bookmark = await env.D1.prepare(`
+  const bookmark = await env.db.prepare(`
     SELECT b.id, b.title, b.url, b.description, b.favicon, b.tags, b.sort_order AS sortOrder,
       b.category_id AS categoryId, b.enabled, c.name AS categoryName
     FROM bookmarks b
@@ -27,6 +27,6 @@ export async function onRequestDelete({ request, env, params }) {
   const admin = await requireAdmin(request, env);
   if (!admin) return jsonResponse({ success: false, message: '未登录' }, 401);
   const id = params.id;
-  await env.D1.prepare('DELETE FROM bookmarks WHERE id = ?').bind(id).run();
+  await env.db.prepare('DELETE FROM bookmarks WHERE id = ?').bind(id).run();
   return jsonResponse({ success: true });
 }

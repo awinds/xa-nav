@@ -12,7 +12,7 @@ function getId(request) {
 }
 
 export async function onRequestGet({ env }) {
-  const result = await env.D1.prepare(`
+  const result = await env.db.prepare(`
     SELECT b.id, b.title, b.url, b.description, b.favicon, b.tags, b.sort_order AS sortOrder,
       b.category_id AS categoryId, b.enabled, c.name AS categoryName
     FROM bookmarks b
@@ -28,10 +28,10 @@ export async function onRequestPost({ request, env }) {
   const body = await parseJson(request);
   const { title, url, description, favicon, categoryId, sortOrder = 0, tags = '', enabled = 1 } = body;
   if (!title || !url) return jsonResponse({ success: false, message: '标题和链接不能为空' }, 400);
-  const write = await env.D1.prepare('INSERT INTO bookmarks (title, url, description, favicon, category_id, sort_order, tags, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+  const write = await env.db.prepare('INSERT INTO bookmarks (title, url, description, favicon, category_id, sort_order, tags, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     .bind(title, url, description || '', favicon || '', categoryId || null, sortOrder, tags, enabled ? 1 : 0)
     .run();
-  const bookmark = await env.D1.prepare(`
+  const bookmark = await env.db.prepare(`
     SELECT b.id, b.title, b.url, b.description, b.favicon, b.tags, b.sort_order AS sortOrder,
       b.category_id AS categoryId, b.enabled, c.name AS categoryName
     FROM bookmarks b

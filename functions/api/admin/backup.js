@@ -1,4 +1,4 @@
-import { jsonResponse, parseJson, getAuthenticatedAdmin, ensureCategoryPrivacyColumn } from '../../lib/utils.js';
+import { jsonResponse, parseJson, getAuthenticatedAdmin } from '../../lib/utils.js';
 
 async function requireAdmin(request, env) {
   return await getAuthenticatedAdmin(request, env);
@@ -119,11 +119,10 @@ function parseBookmarksHtml(html) {
 }
 
 async function readBackup(env) {
-  await ensureCategoryPrivacyColumn(env.D1);
   const [categories, bookmarks, config] = await Promise.all([
-    env.D1.prepare('SELECT id, name, parent_id AS parentId, icon, sort_order AS sortOrder, is_default AS isDefault, is_private AS isPrivate FROM categories ORDER BY sort_order DESC, id ASC').all(),
-    env.D1.prepare('SELECT id, title, url, description, favicon, category_id AS categoryId, sort_order AS sortOrder, tags, enabled FROM bookmarks ORDER BY sort_order DESC, created_at DESC').all(),
-    env.D1.prepare("SELECT key, value FROM config WHERE key != 'turnstile_secret'").all(),
+    env.db.prepare('SELECT id, name, parent_id AS parentId, icon, sort_order AS sortOrder, is_default AS isDefault, is_private AS isPrivate FROM categories ORDER BY sort_order DESC, id ASC').all(),
+    env.db.prepare('SELECT id, title, url, description, favicon, category_id AS categoryId, sort_order AS sortOrder, tags, enabled FROM bookmarks ORDER BY sort_order DESC, created_at DESC').all(),
+    env.db.prepare("SELECT key, value FROM config WHERE key != 'turnstile_secret'").all(),
   ]);
   return {
     version: 1,
@@ -139,7 +138,6 @@ function getPathKey(path) {
 }
 
 async function importBackup(env, data) {
-  await ensureCategoryPrivacyColumn(env.D1);
   const categories = Array.isArray(data.categories) ? data.categories : [];
   const bookmarks = Array.isArray(data.bookmarks) ? data.bookmarks : [];
   const config = Array.isArray(data.config) ? data.config : [];
@@ -148,15 +146,15 @@ async function importBackup(env, data) {
 
   for (const item of config) {
     if (!item?.key || item.key === 'turnstile_secret') continue;
-    await env.D1.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)')
+    await env.db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)')
       .bind(item.key, String(item.value ?? '')).run();
   }
 
   for (const cat of categories.filter((c) => !c.parentName && !c.parentId && !getPathKey(c.parentPath))) {
     if (!cat.name) continue;
-    await env.D1.prepare('INSERT OR IGNORE INTO categories (name, parent_id, icon, sort_order, is_default, is_private) VALUES (?, NULL, ?, ?, ?, ?)')
+    await env.db.prepare('INSERT OR IGNORE INTO categories (name, parent_id, icon, sort_order, is_default, is_private) VALUES (?, NULL, ?, ?, ?, ?)')
       .bind(cat.name, cat.icon || 'fa-solid fa-folder', Number(cat.sortOrder || 0), cat.isDefault ? 1 : 0, cat.isPrivate ? 1 : 0).run();
-    const row = await env.D1.prepare('SELECT id FROM categories WHERE name = ? ORDER BY id DESC LIMIT 1').bind(cat.name).first();
+    const row = await env.db.prepare('SELECT id FROM categories WHERE name = ? ORDER BY id DESC LIMIT 1').bind(cat.name).first();
     if (row?.id) {
       categoryIdByName.set(cat.name, row.id);
       categoryIdByPath.set(getPathKey(cat.categoryPath || [cat.name]), row.id);
@@ -167,9 +165,9 @@ async function importBackup(env, data) {
     if (!cat.name) continue;
     const parentPathKey = getPathKey(cat.parentPath);
     const parentId = parentPathKey ? categoryIdByPath.get(parentPathKey) : (cat.parentName ? categoryIdByName.get(cat.parentName) : cat.parentId);
-    await env.D1.prepare('INSERT OR IGNORE INTO categories (name, parent_id, icon, sort_order, is_default, is_private) VALUES (?, ?, ?, ?, ?, ?)')
+    await env.db.prepare('INSERT OR IGNORE INTO categories (name, parent_id, icon, sort_order, is_default, is_private) VALUES (?, ?, ?, ?, ?, ?)')
       .bind(cat.name, parentId || null, cat.icon || 'fa-solid fa-folder', Number(cat.sortOrder || 0), cat.isDefault ? 1 : 0, cat.isPrivate ? 1 : 0).run();
-    const row = await env.D1.prepare('SELECT id FROM categories WHERE name = ? ORDER BY id DESC LIMIT 1').bind(cat.name).first();
+    const row = await env.db.prepare('SELECT id FROM categories WHERE name = ? ORDER BY id DESC LIMIT 1').bind(cat.name).first();
     if (row?.id) {
       categoryIdByName.set(cat.name, row.id);
       categoryIdByPath.set(getPathKey(cat.categoryPath || [...(cat.parentPath || []), cat.name]), row.id);
@@ -180,7 +178,7 @@ async function importBackup(env, data) {
     if (!bookmark.title || !bookmark.url) continue;
     const categoryPathKey = getPathKey(bookmark.categoryPath);
     const categoryId = categoryPathKey ? categoryIdByPath.get(categoryPathKey) : (bookmark.categoryName ? categoryIdByName.get(bookmark.categoryName) : bookmark.categoryId);
-    await env.D1.prepare('INSERT OR IGNORE INTO bookmarks (title, url, description, favicon, category_id, sort_order, tags, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    await env.db.prepare('INSERT OR IGNORE INTO bookmarks (title, url, description, favicon, category_id, sort_order, tags, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .bind(bookmark.title, bookmark.url, bookmark.description || '', bookmark.favicon || '', categoryId || null, Number(bookmark.sortOrder || 0), bookmark.tags || '', bookmark.enabled === 0 ? 0 : 1).run();
   }
 }
