@@ -3,23 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { requestJson, formatCategoryTree } from '../lib/api.js';
 import { t, LANGS } from '../lib/i18n.js';
 
-const CATEGORY_ICONS = {
-  'AI 工具': 'fa-solid fa-robot', AI: 'fa-solid fa-robot',
-  '云盘': 'fa-solid fa-cloud', '云盘存储': 'fa-solid fa-cloud',
-  '工具': 'fa-solid fa-wrench', '开发工具': 'fa-solid fa-code',
-  '社区': 'fa-solid fa-comments', '社区论坛': 'fa-solid fa-comments',
-  '分论坛': 'fa-solid fa-puzzle-piece',
-  '视频': 'fa-solid fa-play-circle', '音乐': 'fa-solid fa-music',
-  '新闻': 'fa-solid fa-newspaper', '新闻资讯': 'fa-solid fa-newspaper',
-  '购物': 'fa-solid fa-bag-shopping',
-  '学习': 'fa-solid fa-book-open', '学习教程': 'fa-solid fa-book-open',
-  '开发': 'fa-solid fa-code', '设计': 'fa-solid fa-palette', '设计资源': 'fa-solid fa-palette',
-  '效率办公': 'fa-solid fa-bolt',
-  '默认': 'fa-solid fa-folder', 'Default': 'fa-solid fa-folder',
-};
-
 function getCategoryIcon(category) {
-  return category?.icon || CATEGORY_ICONS[category?.name] || 'fa-solid fa-folder';
+  return category?.icon || 'fa-solid fa-folder';
 }
 
 const DEFAULT_FAVICON_API = 'https://icon.horse/icon/';
@@ -316,7 +301,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     { key: 'local',  label: t(lang, 'search.local'),  placeholder: t(lang, 'search.local.placeholder'),  iconClass: 'fa-solid fa-magnifying-glass' },
     { key: 'google', label: t(lang, 'search.google'), placeholder: t(lang, 'search.google.placeholder'), url: 'https://www.google.com/search?q=', iconClass: 'fa-brands fa-google' },
     { key: 'github', label: t(lang, 'search.github'), placeholder: t(lang, 'search.github.placeholder'), url: 'https://github.com/search?q=',    iconClass: 'fa-brands fa-github' },
-    { key: 'baidu',  label: t(lang, 'search.baidu'),  placeholder: t(lang, 'search.baidu.placeholder'),  url: 'https://www.baidu.com/s?wd=',    iconClass: 'fa-brands fa-searchengin' },
+    { key: 'baidu',  label: t(lang, 'search.baidu'),  placeholder: t(lang, 'search.baidu.placeholder'),  url: 'https://www.baidu.com/s?wd=',    iconClass: 'fa-brands fa-paw' },
   ];
 
   useEffect(() => {
