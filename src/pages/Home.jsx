@@ -301,7 +301,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     { key: 'local',  label: t(lang, 'search.local'),  placeholder: t(lang, 'search.local.placeholder'),  iconClass: 'fa-solid fa-magnifying-glass' },
     { key: 'google', label: t(lang, 'search.google'), placeholder: t(lang, 'search.google.placeholder'), url: 'https://www.google.com/search?q=', iconClass: 'fa-brands fa-google' },
     { key: 'github', label: t(lang, 'search.github'), placeholder: t(lang, 'search.github.placeholder'), url: 'https://github.com/search?q=',    iconClass: 'fa-brands fa-github' },
-    { key: 'baidu',  label: t(lang, 'search.baidu'),  placeholder: t(lang, 'search.baidu.placeholder'),  url: 'https://www.baidu.com/s?wd=',    iconClass: 'fa-brands fa-paw' },
+    { key: 'baidu',  label: t(lang, 'search.baidu'),  placeholder: t(lang, 'search.baidu.placeholder'),  url: 'https://www.baidu.com/s?wd=',    iconClass: 'fa-solid fa-paw' },
   ];
 
   useEffect(() => {
