@@ -1,0 +1,21 @@
+name = "xa-nav"
+compatibility_date = "2026-06-11"
+functions = "./functions"
+
+# 如果使用 Wrangler 本地开发或发布，请填写 Account ID
+# account_id = ""
+
+d1_databases = [
+  { binding = "D1", database_name = "xa_nav" }
+]
+
+[ai]
+binding = "AI"
+
+[build]
+command = "npm run build"
+pages_build_output_dir = "dist"
+
+[vars]
+ADMIN_USER = "admin"
+ADMIN_PASSWORD = "admin123"
