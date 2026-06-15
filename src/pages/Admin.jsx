@@ -52,6 +52,30 @@ function Toast({ toast }) {
   );
 }
 
+function AdminTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const updateVisible = () => setVisible(window.scrollY > 0);
+    updateVisible();
+    window.addEventListener('scroll', updateVisible, { passive: true });
+    return () => window.removeEventListener('scroll', updateVisible);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      title="返回顶部"
+      className="fixed bottom-6 right-6 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-lg transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+    >
+      <i className="fa-solid fa-chevron-up text-xs" />
+    </button>
+  );
+}
+
 function DeleteModal({ item, onConfirm, onCancel }) {
   if (!item) return null;
   return (
@@ -174,9 +198,10 @@ function BookmarksSection({ categories, showToast, faviconApi = DEFAULT_FAVICON_
   return (
     <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
       <DeleteModal item={deleteItem} onConfirm={handleDelete} onCancel={() => setDeleteItem(null)} />
+      <AdminTopButton />
 
       {/* Form */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24 xl:self-start">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900">{editing ? '编辑收藏' : '添加收藏'}</h2>
           {editing && <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">编辑中</span>}
@@ -483,8 +508,9 @@ function CategoriesSection({ categories, onReload, showToast }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
       <DeleteModal item={deleteItem} onConfirm={handleDelete} onCancel={() => setDeleteItem(null)} />
+      <AdminTopButton />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24 xl:self-start">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900">{editing ? '编辑分类' : '添加分类'}</h2>
           {editing && <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">编辑中</span>}
@@ -636,8 +662,9 @@ function FriendLinksSection({ showToast, faviconApi = DEFAULT_FAVICON_API }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
       <DeleteModal item={deleteItem} onConfirm={handleDelete} onCancel={() => setDeleteItem(null)} />
+      <AdminTopButton />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24 xl:self-start">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900">{editing ? '编辑友情链接' : '添加友情链接'}</h2>
           {editing && <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">编辑中</span>}
@@ -1046,7 +1073,7 @@ export default function Admin({ admin, lang = 'zh', siteLogo = '', faviconApi = 
               {siteLogo ? <img src={siteLogo} alt="" className="h-full w-full object-cover" /> : <i className="fa-solid fa-bookmark text-sm" />}
             </div>
             <div>
-              <div className="text-sm font-bold text-slate-900">XA-Nav · 管理后台</div>
+              <div className="text-sm font-bold text-slate-900">XA-Nav · 管理后台 · v{packageInfo.version}</div>
               <div className="text-xs text-slate-400">欢迎，{admin.displayName || admin.username}</div>
             </div>
           </div>
