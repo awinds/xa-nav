@@ -152,20 +152,7 @@ Manually copy `db/schema.sql` (*4 tables*) and import it in the D1 database cons
 wrangler d1 execute xa-nav-db --file=db/schema.sql
 ```
 
-### 4. Configure Workers AI binding (optional)
-
-Workers AI is used to generate content when smart bookmark autofill cannot retrieve a missing description or tags. The admin switch is disabled by default.
-
-[wrangler.toml](wrangler.toml) already contains a binding example:
-
-```toml
-[ai]
-binding = "AI"
-```
-
-If you do not use the AI Meta feature, you can keep the admin switch disabled.
-
-### 5. Cloudflare Pages build settings
+### 4. Cloudflare Pages build settings
 
 1. Go to **Cloudflare Dashboard** > **Workers & Pages** > **Create application** > **Want to deploy Pages? Get started**
 2. Connect your Git repository
@@ -175,7 +162,7 @@ If you do not use the AI Meta feature, you can keep the admin switch disabled.
    - **Build output directory**: `dist` (current directory)
    - **Root directory**: `/` (repository root)
 
-### 6. Configure environment variables
+### 5. Configure environment variables
 
 1. Go to **Cloudflare Dashboard** > **Workers & Pages** > **xa-nav**
 2. Go to **Settings** > **Variables and Secrets**
@@ -186,6 +173,8 @@ If you do not use the AI Meta feature, you can keep the admin switch disabled.
 4. Add **D1 database**:
    - **Variable name**: `db`
    - **D1 database**: `xa-nav-db`
+5. (Optional) Add **Workers AI**:
+   - **Variable name**: `AI`
 5. Go to **Deployments** > **All deployments**, then `Retry deployment` for the latest deployment (you must redeploy after binding the D1 database)
 
 ## System Configuration

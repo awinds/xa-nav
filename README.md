@@ -146,20 +146,7 @@ wrangler d1 create xa-nav-db
 wrangler d1 execute xa-nav-db --file=db/schema.sql
 ```
 
-### 4. 配置 Workers AI 绑定（可选）
-
-Workers AI 用于网址智能填充缺失描述或标签时生成内容，后台开关默认关闭。
-
-[wrangler.toml](wrangler.toml) 已包含绑定示例：
-
-```toml
-[ai]
-binding = "AI"
-```
-
-如果不使用 AI Meta 功能，可以保持后台开关关闭。
-
-### 5. Cloudflare Pages 构建配置
+### 4. Cloudflare Pages 构建配置
 1. 前往 **Cloudflare 控制台** > **Workers和Pages** > **创建应用程序** > **想要部署 Pages？开始使用**
 2. 连接你的 Git 仓库
 3. 配置 **构建设置**：
@@ -168,7 +155,7 @@ binding = "AI"
    - **构建输出目录**: `dist`（当前目录）
    - **根目录**: `/`（仓库根目录）
 
-### 6. 配置环境变量
+### 5. 配置环境变量
 1. 前往 **Cloudflare 控制台** > **Workers和Pages** > **xa-nav**
 2. 前往 **设置** > **变量和密钥** 
 - `ADMIN_USER`：后台管理员账号，未配置时为 `admin`
@@ -178,6 +165,8 @@ binding = "AI"
 4. 添加 **D1数据库**：
    - **变量名**: `db`
    - **D1 数据库**: `xa-nav-db`
+5. (可选)添加 **Workers AI**:
+   - **变量名**: `AI`
 5. 导航到 **部署** > **所有部署**，最新的部署... `重试部署`（d1数据库绑定后必须重新部署）
 
 
