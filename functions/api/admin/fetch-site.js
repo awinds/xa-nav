@@ -1,4 +1,3 @@
-import iconv from 'iconv-lite';
 import { jsonResponse, getAuthenticatedAdmin, getConfigMap } from '../../lib/utils.js';
 
 async function requireAdmin(request, env) {
@@ -128,16 +127,46 @@ function normalizeCharset(charset) {
   return value;
 }
 
-function decodeHtml(bytes, contentType) {
-  const charset = detectCharset(contentType, bytes);
-  if (['gb18030', 'gbk', 'gb2312', 'big5'].includes(charset) && iconv.encodingExists(charset)) {
-    return iconv.decode(Buffer.from(bytes), charset);
-  }
+function decodeWithCharset(bytes, charset) {
   try {
-    return new TextDecoder(charset).decode(bytes);
+    return new TextDecoder(charset, { fatal: false }).decode(bytes);
   } catch {
-    return new TextDecoder('utf-8').decode(bytes);
+    return '';
   }
+}
+
+function countReplacementChars(text) {
+  return (String(text || '').match(/�/g) || []).length;
+}
+
+function scoreDecodedHtml(text) {
+  const value = String(text || '');
+  if (!value) return -Infinity;
+
+  const replacementPenalty = countReplacementChars(value) * 8;
+  const htmlScore = (value.match(/<\s*(?:!doctype|html|head|title|meta|body|link)\b/gi) || []).length * 20;
+  const cjkScore = (value.match(/[\u4e00-\u9fff]/g) || []).length;
+  const mojibakePenalty = (value.match(/[锟斤拷]{1,3}|ï¿½|Ã.|Â./g) || []).length * 6;
+
+  return htmlScore + cjkScore - replacementPenalty - mojibakePenalty;
+}
+
+function decodeHtml(bytes, contentType) {
+  const declaredCharset = detectCharset(contentType, bytes);
+  const candidates = [declaredCharset, 'utf-8', 'gb18030', 'big5'].filter(Boolean);
+  let best = '';
+  let bestScore = -Infinity;
+
+  for (const charset of [...new Set(candidates)]) {
+    const decoded = decodeWithCharset(bytes, charset);
+    const score = scoreDecodedHtml(decoded);
+    if (score > bestScore) {
+      best = decoded;
+      bestScore = score;
+    }
+  }
+
+  return best || new TextDecoder('utf-8').decode(bytes);
 }
 
 async function readResponseBytes(res, limit = 50000) {
