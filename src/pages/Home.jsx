@@ -662,9 +662,9 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
 
         {/* Main */}
         <main ref={contentRef} className="flex-1 overflow-y-auto">
-          <div className="p-4 xl:p-5">
+          <div className="flex min-h-full flex-col p-4 xl:p-5">
             {visibleCats.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center py-24 text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              <div className={`flex flex-1 flex-col items-center justify-center py-24 text-center ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                 <i className="fa-solid fa-face-frown-open mb-4 text-4xl" />
                 <p className="text-lg font-medium">{t(lang, 'home.empty')}</p>
                 {showEmptySearchActions && <p className="mt-1 text-sm">{t(lang, 'home.empty.tip')}</p>}
@@ -675,20 +675,18 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
                 )}
               </div>
             ) : (
-              <>
-                {visibleCats.map((cat) => (
-                  <CategorySection key={cat.id} cat={cat} isDark={isDark} lang={lang}
-                    activeChild={activeChildMap[cat.id] ?? null}
-                    onSetActiveChild={(childId) => setActiveCat(cat.id, childId)}
-                    faviconApi={faviconApi}
-                  />
-                ))}
-                <FriendLinksSection friendLinks={friendLinks} isDark={isDark} lang={lang} faviconApi={faviconApi} />
-                <footer className={`mt-8 pb-2 text-center text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-                  {siteCopyright || `© ${siteTitle}`}
-                </footer>
-              </>
+              visibleCats.map((cat) => (
+                <CategorySection key={cat.id} cat={cat} isDark={isDark} lang={lang}
+                  activeChild={activeChildMap[cat.id] ?? null}
+                  onSetActiveChild={(childId) => setActiveCat(cat.id, childId)}
+                  faviconApi={faviconApi}
+                />
+              ))
             )}
+            <FriendLinksSection friendLinks={friendLinks} isDark={isDark} lang={lang} faviconApi={faviconApi} />
+            <footer className={`mt-8 pb-2 text-center text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              {siteCopyright || `© ${siteTitle}`}
+            </footer>
           </div>
         </main>
       </div>
