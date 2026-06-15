@@ -166,7 +166,7 @@ function BookmarksSection({ categories, showToast, faviconApi = DEFAULT_FAVICON_
         favicon: res.favicon ?? '',
         tags: res.tags ?? '',
       }));
-      showToast('信息获取成功');
+      showToast(res.ai ? '信息获取成功（AI 生成）' : '信息获取成功');
     } catch { showToast('获取失败，请手动填写', 'error'); }
     finally { setFetching(false); }
   }

@@ -36,27 +36,55 @@ function parseAiJson(text) {
   }
 }
 
+function extractAiText(result) {
+  const candidates = [
+    result?.response,
+    result?.text,
+    result?.output,
+    result?.result?.response,
+    result?.result?.text,
+  ];
+
+  for (const value of candidates) {
+    if (!value) continue;
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map((item) => typeof item === 'string' ? item : item?.text || item?.content || '').join('\n');
+  }
+
+  const messageContent = result?.choices?.[0]?.message?.content || result?.choices?.[0]?.text;
+  if (typeof messageContent === 'string') return messageContent;
+  if (Array.isArray(messageContent)) return messageContent.map((item) => item?.text || item?.content || '').join('\n');
+
+  return '';
+}
+
 async function generateSiteMetaWithAI(env, { title, hostname, url }) {
   if (!env?.AI?.run) return {};
-  try {
-    const prompt = `请根据网站信息生成一个简短中文描述和最多 5 个中文标签。只返回 JSON，不要 Markdown。\n网站标题：${title || hostname}\n域名：${hostname}\nURL：${url}\n格式：{"description":"不超过60字的网站描述","tags":["标签1","标签2"]}`;
-    const result = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
-      messages: [
-        { role: 'system', content: '你是网址导航后台的元数据助手。只输出合法 JSON。' },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 256,
-    });
-    const text = result?.response || result?.text || result?.output || '';
-    const data = parseAiJson(Array.isArray(text) ? text.join('\n') : text);
-    if (!data || typeof data !== 'object') return {};
-    return {
-      description: cleanAiText(data.description, 120),
-      tags: normalizeAiTags(data.tags),
-    };
-  } catch {
-    return {};
+  const models = ['@cf/meta/llama-3.1-8b-instruct-fp8', '@cf/meta/llama-3.2-3b-instruct'];
+  const prompt = `请根据网站信息生成一个简短中文描述和最多 5 个中文标签。只返回 JSON，不要 Markdown。\n网站标题：${title || hostname}\n域名：${hostname}\nURL：${url}\n格式：{"description":"不超过60字的网站描述","tags":["标签1","标签2"]}`;
+
+  for (const model of models) {
+    try {
+      const result = await env.AI.run(model, {
+        messages: [
+          { role: 'system', content: '你是网址导航后台的元数据助手。只输出合法 JSON。' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 256,
+      });
+      const text = extractAiText(result);
+      const data = parseAiJson(text);
+      if (!data || typeof data !== 'object') continue;
+
+      const description = cleanAiText(data.description, 120);
+      const tags = normalizeAiTags(data.tags);
+      if (description || tags) return { description, tags };
+    } catch (error) {
+      console.error('Workers AI metadata generation failed:', model, error?.message || error);
+    }
   }
+
+  return {};
 }
 
 function extractMeta(html, hostname, siteUrl) {
@@ -227,12 +255,14 @@ export async function onRequestGet({ request, env }) {
 
     if (!res.ok) {
       const aiMeta = enableAiMeta ? await generateSiteMetaWithAI(env, { title: hostname, hostname, url: siteUrl }) : {};
+      const usedAiMeta = Boolean(aiMeta.description || aiMeta.tags);
       return jsonResponse({
         success: true,
         title: hostname,
         description: aiMeta.description || '',
         favicon: '',
         tags: aiMeta.tags || '',
+        ai: usedAiMeta,
       });
     }
 
@@ -242,21 +272,30 @@ export async function onRequestGet({ request, env }) {
 
     const meta = extractMeta(html, hostname, siteUrl);
     if (!meta.title) meta.title = hostname;
+    let usedAiMeta = false;
     if (enableAiMeta && (!meta.description || !meta.tags)) {
       const aiMeta = await generateSiteMetaWithAI(env, { title: meta.title, hostname, url: siteUrl });
-      if (!meta.description && aiMeta.description) meta.description = aiMeta.description;
-      if (!meta.tags && aiMeta.tags) meta.tags = aiMeta.tags;
+      if (!meta.description && aiMeta.description) {
+        meta.description = aiMeta.description;
+        usedAiMeta = true;
+      }
+      if (!meta.tags && aiMeta.tags) {
+        meta.tags = aiMeta.tags;
+        usedAiMeta = true;
+      }
     }
 
-    return jsonResponse({ success: true, ...meta });
+    return jsonResponse({ success: true, ...meta, ai: usedAiMeta });
   } catch (err) {
     const aiMeta = enableAiMeta ? await generateSiteMetaWithAI(env, { title: hostname, hostname, url: siteUrl }) : {};
+    const usedAiMeta = Boolean(aiMeta.description || aiMeta.tags);
     return jsonResponse({
       success: true,
       title: hostname,
       description: aiMeta.description || '',
       favicon: '',
       tags: aiMeta.tags || '',
+      ai: usedAiMeta,
     });
   }
 }

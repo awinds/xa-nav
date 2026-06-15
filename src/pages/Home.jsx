@@ -467,6 +467,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
         favicon: res.favicon ?? '',
         tags: res.tags ?? '',
       }));
+      setQuickAddError(res.ai ? '信息获取成功（AI 生成）' : '');
     } catch (err) {
       setQuickAddError(err.message || t(lang, 'quickAdd.fetchFail'));
     } finally {
