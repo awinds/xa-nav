@@ -333,6 +333,7 @@ const AWESOME_GROUPS = [
   { label: '生活', icons: ['fa-solid fa-house','fa-solid fa-building','fa-solid fa-city','fa-solid fa-cart-shopping','fa-solid fa-bag-shopping','fa-solid fa-basket-shopping','fa-solid fa-store','fa-solid fa-gift','fa-solid fa-graduation-cap','fa-solid fa-gamepad','fa-solid fa-trophy','fa-solid fa-medal','fa-solid fa-plane','fa-solid fa-train','fa-solid fa-car','fa-solid fa-bus','fa-solid fa-bicycle','fa-solid fa-motorcycle','fa-solid fa-ship','fa-solid fa-route','fa-solid fa-utensils','fa-solid fa-mug-hot','fa-solid fa-pizza-slice','fa-solid fa-burger','fa-solid fa-dumbbell','fa-solid fa-heart-pulse','fa-solid fa-hospital','fa-solid fa-briefcase','fa-solid fa-wallet','fa-solid fa-credit-card','fa-solid fa-camera','fa-solid fa-map-location-dot','fa-solid fa-location-dot','fa-solid fa-compass','fa-solid fa-tree','fa-solid fa-leaf','fa-solid fa-seedling','fa-solid fa-sun','fa-solid fa-moon','fa-solid fa-cloud-sun','fa-solid fa-umbrella','fa-solid fa-shirt','fa-solid fa-glasses','fa-solid fa-bed','fa-solid fa-couch','fa-solid fa-bath','fa-solid fa-paw','fa-solid fa-child','fa-solid fa-people-roof','fa-solid fa-hand-holding-heart'] },
   { label: '社交', icons: ['fa-solid fa-comments','fa-solid fa-comment-dots','fa-solid fa-comment','fa-solid fa-users','fa-solid fa-user','fa-solid fa-user-group','fa-solid fa-address-book','fa-solid fa-envelope','fa-solid fa-paper-plane','fa-solid fa-inbox','fa-solid fa-bell','fa-solid fa-share-nodes','fa-solid fa-globe','fa-solid fa-earth-asia','fa-solid fa-hashtag','fa-solid fa-at','fa-solid fa-thumbs-up','fa-solid fa-thumbs-down','fa-solid fa-handshake','fa-solid fa-people-arrows','fa-brands fa-github','fa-brands fa-discord','fa-brands fa-telegram','fa-brands fa-twitter','fa-brands fa-x-twitter','fa-brands fa-weixin','fa-brands fa-qq','fa-brands fa-weibo','fa-brands fa-facebook','fa-brands fa-instagram','fa-brands fa-youtube','fa-brands fa-tiktok','fa-brands fa-linkedin','fa-brands fa-slack','fa-brands fa-whatsapp','fa-brands fa-reddit','fa-brands fa-medium','fa-brands fa-dribbble','fa-brands fa-behance','fa-solid fa-user-plus','fa-solid fa-user-check','fa-solid fa-user-shield','fa-solid fa-id-card','fa-solid fa-id-badge','fa-solid fa-bullhorn','fa-solid fa-radio','fa-solid fa-sitemap','fa-solid fa-ranking-star','fa-solid fa-award','fa-solid fa-heart'] },
   { label: '方向', icons: ['fa-solid fa-arrow-up','fa-solid fa-arrow-down','fa-solid fa-arrow-left','fa-solid fa-arrow-right','fa-solid fa-arrow-up-right-from-square','fa-solid fa-right-left','fa-solid fa-up-down','fa-solid fa-rotate','fa-solid fa-arrows-rotate','fa-solid fa-compass','fa-solid fa-location-dot','fa-solid fa-map','fa-solid fa-map-location-dot','fa-solid fa-route','fa-solid fa-signs-post','fa-solid fa-chevron-up','fa-solid fa-chevron-down','fa-solid fa-chevron-left','fa-solid fa-chevron-right','fa-solid fa-circle-arrow-right','fa-solid fa-circle-arrow-left','fa-solid fa-circle-arrow-up','fa-solid fa-circle-arrow-down','fa-solid fa-angles-right','fa-solid fa-angles-left','fa-solid fa-angles-up','fa-solid fa-angles-down','fa-solid fa-maximize','fa-solid fa-minimize','fa-solid fa-expand','fa-solid fa-compress','fa-solid fa-up-right-and-down-left-from-center','fa-solid fa-down-left-and-up-right-to-center','fa-solid fa-turn-up','fa-solid fa-turn-down','fa-solid fa-reply','fa-solid fa-share','fa-solid fa-forward','fa-solid fa-backward','fa-solid fa-forward-step','fa-solid fa-backward-step','fa-solid fa-caret-up','fa-solid fa-caret-down','fa-solid fa-caret-left','fa-solid fa-caret-right','fa-solid fa-location-arrow','fa-solid fa-crosshairs','fa-solid fa-street-view','fa-solid fa-diamond-turn-right','fa-solid fa-shuffle'] },
+  { label: '搜索', icons: ['fa-solid fa-magnifying-glass','fa-solid fa-magnifying-glass-plus','fa-solid fa-magnifying-glass-minus','fa-solid fa-magnifying-glass-chart','fa-solid fa-filter','fa-solid fa-filter-circle-xmark','fa-solid fa-filter-circle-dollar','fa-solid fa-binoculars','fa-solid fa-eye','fa-solid fa-eye-low-vision','fa-solid fa-eye-slash','fa-solid fa-glasses','fa-solid fa-circle-question','fa-solid fa-circle-info','fa-solid fa-question','fa-solid fa-info','fa-solid fa-location-crosshairs','fa-solid fa-crosshairs','fa-solid fa-bullseye','fa-solid fa-radar','fa-solid fa-map-location-dot','fa-solid fa-map','fa-solid fa-location-dot','fa-solid fa-map-pin','fa-solid fa-thumbtack','fa-solid fa-compass','fa-solid fa-sitemap','fa-solid fa-diagram-project','fa-solid fa-list','fa-solid fa-list-check','fa-solid fa-table-list','fa-solid fa-table-cells','fa-solid fa-layer-group','fa-solid fa-folder-tree','fa-solid fa-tags','fa-solid fa-tag','fa-solid fa-hashtag','fa-solid fa-at','fa-solid fa-barcode','fa-solid fa-qrcode','fa-solid fa-fingerprint','fa-solid fa-id-card','fa-solid fa-address-card','fa-solid fa-user-magnifying-glass','fa-solid fa-user-check','fa-solid fa-user-clock','fa-solid fa-clock','fa-solid fa-calendar-days','fa-solid fa-calendar-check','fa-solid fa-sort','fa-solid fa-sort-up','fa-solid fa-sort-down','fa-solid fa-arrow-down-a-z','fa-solid fa-arrow-up-a-z','fa-solid fa-arrow-down-z-a','fa-solid fa-arrow-up-z-a','fa-solid fa-arrow-down-wide-short','fa-solid fa-arrow-up-wide-short','fa-solid fa-arrow-down-short-wide','fa-solid fa-arrow-up-short-wide','fa-solid fa-chart-line','fa-solid fa-chart-simple','fa-solid fa-chart-column','fa-solid fa-ranking-star','fa-solid fa-star','fa-solid fa-fire','fa-solid fa-bolt','fa-solid fa-lightbulb','fa-solid fa-wand-magic-sparkles','fa-solid fa-robot','fa-solid fa-database','fa-solid fa-server','fa-solid fa-cloud','fa-solid fa-globe','fa-solid fa-link','fa-solid fa-code','fa-solid fa-terminal','fa-solid fa-bug','fa-solid fa-shield-halved','fa-solid fa-key'] },
 ];
 
 const ICON_GROUP_SIZE = 80;
@@ -359,7 +360,15 @@ function IconPreview({ icon, className = '' }) {
 function AwesomeIconPicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [group, setGroup] = useState(0);
+  const [iconQuery, setIconQuery] = useState('');
   const ref = useRef(null);
+
+  const visibleIcons = useMemo(() => {
+    const query = iconQuery.trim().toLowerCase();
+    if (!query) return PICKER_GROUPS[group]?.icons || [];
+    return [...new Set(PICKER_GROUPS.flatMap((item) => item.icons))]
+      .filter((icon) => icon.toLowerCase().includes(query));
+  }, [group, iconQuery]);
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -380,7 +389,7 @@ function AwesomeIconPicker({ value, onChange }) {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600"
-          title="选择 Font Awesome 图标"
+          title="选择图标"
         >
           <IconPreview icon={value} className="text-base" />
         </button>
@@ -400,7 +409,7 @@ function AwesomeIconPicker({ value, onChange }) {
             ))}
           </div>
           <div className="grid grid-cols-10 gap-1">
-            {PICKER_GROUPS[group].icons.map((icon) => (
+            {visibleIcons.map((icon) => (
               <button
                 key={icon}
                 type="button"
@@ -412,7 +421,16 @@ function AwesomeIconPicker({ value, onChange }) {
               </button>
             ))}
           </div>
-          <div className="mt-2 truncate text-xs text-slate-400">当前：{value || 'fa-solid fa-folder'}</div>
+          {visibleIcons.length === 0 && <div className="py-6 text-center text-xs text-slate-400">未找到匹配图标</div>}
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              value={iconQuery}
+              onChange={(e) => setIconQuery(e.target.value)}
+              placeholder="搜索图标，如：folder"
+              className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-500/15"
+            />
+            <div className="min-w-0 flex-1 truncate text-xs text-slate-400">当前：{value || 'fa-solid fa-folder'}</div>
+          </div>
         </div>
       )}
     </div>
@@ -470,7 +488,7 @@ function CategoriesSection({ categories, onReload, showToast }) {
             <FormField label="名称">
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="分类名称" className={inputCls} required />
             </FormField>
-            <FormField label="Font Awesome 图标">
+            <FormField label="图标">
               <AwesomeIconPicker value={form.icon} onChange={(v) => setForm({ ...form, icon: v })} />
             </FormField>
           </div>
