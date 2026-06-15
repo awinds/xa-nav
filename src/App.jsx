@@ -104,7 +104,7 @@ function AppShell() {
             checkingAuth
               ? <div className="flex min-h-screen items-center justify-center text-slate-400"><i className="fa-solid fa-spinner fa-spin mr-2" />{t(lang, 'common.loading')}</div>
               : admin
-              ? <Admin admin={admin} lang={lang} siteLogo={siteLogo} faviconApi={faviconApi} />
+              ? <Admin admin={admin} lang={lang} siteLogo={siteLogo} faviconApi={faviconApi} onLogout={handleLogout} />
               : <Navigate to="/login" state={{ from: location }} replace />
           }
         />

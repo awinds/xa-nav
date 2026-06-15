@@ -1034,7 +1034,7 @@ function ConfigSection({ showToast }) {
 }
 
 // ─── 主组件 ──────────────────────────────────────────────────────────────────
-export default function Admin({ admin, lang = 'zh', siteLogo = '', faviconApi = DEFAULT_FAVICON_API }) {
+export default function Admin({ admin, lang = 'zh', siteLogo = '', faviconApi = DEFAULT_FAVICON_API, onLogout }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('bookmarks');
@@ -1077,9 +1077,18 @@ export default function Admin({ admin, lang = 'zh', siteLogo = '', faviconApi = 
               <div className="text-xs text-slate-400">欢迎，{admin.displayName || admin.username}</div>
             </div>
           </div>
-          <Link to="/" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700">
-            <i className="fa-solid fa-arrow-left" /> 返回首页
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700">
+              <i className="fa-solid fa-arrow-left" /> 返回首页
+            </Link>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex items-center gap-1.5 rounded-xl border border-rose-100 px-3 py-2 text-xs font-medium text-rose-500 transition hover:bg-rose-50 hover:text-rose-600"
+            >
+              <i className="fa-solid fa-right-from-bracket" /> 退出登录
+            </button>
+          </div>
         </div>
       </header>
 
