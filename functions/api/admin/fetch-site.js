@@ -1,3 +1,4 @@
+import iconv from 'iconv-lite';
 import { jsonResponse, getAuthenticatedAdmin, getConfigMap } from '../../lib/utils.js';
 
 async function requireAdmin(request, env) {
@@ -108,6 +109,62 @@ function extractMeta(html, hostname, siteUrl) {
   return { title, description, favicon, tags };
 }
 
+function detectCharset(contentType, bytes) {
+  const headerCharset = String(contentType || '').match(/charset\s*=\s*["']?([^\s;"']+)/i)?.[1];
+  if (headerCharset) return normalizeCharset(headerCharset);
+
+  const ascii = new TextDecoder('latin1').decode(bytes.slice(0, Math.min(bytes.length, 4096)));
+  const metaCharset = ascii.match(/<meta[^>]+charset\s*=\s*["']?([^\s"'/>;]+)/i)?.[1]
+    || ascii.match(/<meta[^>]+http-equiv\s*=\s*["']content-type["'][^>]+content\s*=\s*["'][^"']*charset\s*=\s*([^\s;"']+)/i)?.[1]
+    || ascii.match(/<meta[^>]+content\s*=\s*["'][^"']*charset\s*=\s*([^\s;"']+)["'][^>]+http-equiv\s*=\s*["']content-type["']/i)?.[1];
+  return normalizeCharset(metaCharset || 'utf-8');
+}
+
+function normalizeCharset(charset) {
+  const value = String(charset || '').trim().toLowerCase().replace(/^['"]|['"]$/g, '');
+  if (!value || value === 'utf8') return 'utf-8';
+  if (['gb2312', 'gbk', 'gb18030', 'hz-gb-2312'].includes(value)) return 'gb18030';
+  if (['big5', 'big5-hkscs'].includes(value)) return 'big5';
+  return value;
+}
+
+function decodeHtml(bytes, contentType) {
+  const charset = detectCharset(contentType, bytes);
+  if (['gb18030', 'gbk', 'gb2312', 'big5'].includes(charset) && iconv.encodingExists(charset)) {
+    return iconv.decode(Buffer.from(bytes), charset);
+  }
+  try {
+    return new TextDecoder(charset).decode(bytes);
+  } catch {
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+}
+
+async function readResponseBytes(res, limit = 50000) {
+  const reader = res.body.getReader();
+  const chunks = [];
+  let bytes = 0;
+  try {
+    while (bytes < limit) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = value.length > limit - bytes ? value.slice(0, limit - bytes) : value;
+      chunks.push(chunk);
+      bytes += chunk.length;
+    }
+  } finally {
+    reader.cancel();
+  }
+
+  const buffer = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return buffer;
+}
+
 export async function onRequestGet({ request, env }) {
   const admin = await requireAdmin(request, env);
   if (!admin) return jsonResponse({ success: false, message: '未登录' }, 401);
@@ -150,18 +207,9 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // 只读前 50KB，足够提取 meta
-    const reader = res.body.getReader();
-    let html = '';
-    let bytes = 0;
-    const decoder = new TextDecoder();
-    while (bytes < 50000) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      html += decoder.decode(value, { stream: true });
-      bytes += value.length;
-    }
-    reader.cancel();
+    // 只读前 50KB，足够提取 meta；按页面声明的 charset 解码，避免 GBK/GB2312 页面乱码
+    const htmlBytes = await readResponseBytes(res, 50000);
+    const html = decodeHtml(htmlBytes, res.headers.get('content-type'));
 
     const meta = extractMeta(html, hostname, siteUrl);
     if (!meta.title) meta.title = hostname;

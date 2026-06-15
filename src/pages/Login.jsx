@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { requestJson } from '../lib/api.js';
 import { t } from '../lib/i18n.js';
+import packageInfo from '../../package.json';
 
 export default function Login({ onLogin, lang = 'zh', siteTitle = 'XA-Nav', siteLogo = '', siteCopyright = '' }) {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -196,7 +197,7 @@ export default function Login({ onLogin, lang = 'zh', siteTitle = 'XA-Nav', site
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">{siteCopyright || `© ${siteTitle} · Cloudflare Pages`}</p>
+        <p className="mt-6 text-center text-xs text-slate-400">{siteCopyright || `© ${siteTitle} · v${packageInfo.version} · Cloudflare Pages`}</p>
       </div>
     </div>
   );

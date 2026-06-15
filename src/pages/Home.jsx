@@ -2,6 +2,7 @@ import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useSta
 import { Link, useNavigate } from 'react-router-dom';
 import { requestJson, formatCategoryTree } from '../lib/api.js';
 import { t, LANGS } from '../lib/i18n.js';
+import packageInfo from '../../package.json';
 
 function getCategoryIcon(category) {
   return category?.icon || 'fa-solid fa-folder';
@@ -140,7 +141,7 @@ function CategorySection({ cat, isDark, activeChild, onSetActiveChild, lang, fav
           );
         })}
       </div>
-      <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }} className="grid gap-3">
+      <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }} className="grid gap-3">
         {visibleItems.map((bookmark) => <BookmarkCard key={bookmark.id} bookmark={bookmark} isDark={isDark} faviconApi={faviconApi} />)}
       </div>
     </section>
@@ -211,7 +212,7 @@ function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, f
           <div className="md:col-span-2">
             <label className={labelCls}>{t(lang, 'quickAdd.url')}</label>
             <div className="flex gap-2">
-              <input value={form.url} onChange={(e) => onChange({ url: e.target.value })} className={inputCls} placeholder={t(lang, 'quickAdd.url.placeholder')} />
+              <input value={form.url} onChange={(e) => onChange({ url: e.target.value, description: '', favicon: '', tags: '' })} className={inputCls} placeholder={t(lang, 'quickAdd.url.placeholder')} />
               <button type="button" onClick={onFetchSite} disabled={fetching || !form.url}
                 className="shrink-0 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">
                 {fetching ? t(lang, 'quickAdd.fetching') : t(lang, 'quickAdd.autofill')}
@@ -462,9 +463,9 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
       setQuickAddForm((form) => ({
         ...form,
         title: res.title || form.title,
-        description: res.description || form.description,
+        description: res.description ?? '',
         favicon: res.favicon ?? '',
-        tags: res.tags || form.tags,
+        tags: res.tags ?? '',
       }));
     } catch (err) {
       setQuickAddError(err.message || t(lang, 'quickAdd.fetchFail'));
@@ -685,7 +686,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
             )}
             <FriendLinksSection friendLinks={friendLinks} isDark={isDark} lang={lang} faviconApi={faviconApi} />
             <footer className={`mt-8 pb-2 text-center text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-              {siteCopyright || `© ${siteTitle}`}
+              {siteCopyright || `© ${siteTitle} · v${packageInfo.version}`}
             </footer>
           </div>
         </main>

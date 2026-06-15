@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { requestJson, formatCategoryTree } from '../lib/api.js';
 import { t, LANGS } from '../lib/i18n.js';
+import packageInfo from '../../package.json';
 
 const EMPTY_BOOKMARK = { title: '', url: '', description: '', favicon: '', categoryId: '', tags: '', sortOrder: 0, enabled: 1 };
 const EMPTY_CATEGORY = { name: '', icon: '', parentId: '', sortOrder: 0, isPrivate: 0 };
@@ -161,9 +162,9 @@ function BookmarksSection({ categories, showToast, faviconApi = DEFAULT_FAVICON_
       setForm((f) => ({
         ...f,
         title: res.title || f.title,
-        description: res.description || f.description,
+        description: res.description ?? '',
         favicon: res.favicon ?? '',
-        tags: res.tags || f.tags,
+        tags: res.tags ?? '',
       }));
       showToast('信息获取成功');
     } catch { showToast('获取失败，请手动填写', 'error'); }
@@ -186,7 +187,7 @@ function BookmarksSection({ categories, showToast, faviconApi = DEFAULT_FAVICON_
             <div className="flex gap-2">
               <input
                 value={form.url}
-                onChange={(e) => setForm({ ...form, url: e.target.value })}
+                onChange={(e) => setForm({ ...form, url: e.target.value, description: '', favicon: '', tags: '' })}
                 placeholder="https://..."
                 className={`${inputCls} flex-1`}
                 required
@@ -366,6 +367,7 @@ function AwesomeIconPicker({ value, onChange }) {
   const visibleIcons = useMemo(() => {
     const query = iconQuery.trim().toLowerCase();
     if (!query) return PICKER_GROUPS[group]?.icons || [];
+    if (query.length < 2) return [];
     return [...new Set(PICKER_GROUPS.flatMap((item) => item.icons))]
       .filter((icon) => icon.toLowerCase().includes(query));
   }, [group, iconQuery]);
@@ -421,7 +423,11 @@ function AwesomeIconPicker({ value, onChange }) {
               </button>
             ))}
           </div>
-          {visibleIcons.length === 0 && <div className="py-6 text-center text-xs text-slate-400">未找到匹配图标</div>}
+          {visibleIcons.length === 0 && (
+            <div className="py-6 text-center text-xs text-slate-400">
+              {iconQuery.trim() && iconQuery.trim().length < 2 ? '请输入至少 2 个字符' : '未找到匹配图标'}
+            </div>
+          )}
           <div className="mt-2 flex items-center gap-2">
             <input
               value={iconQuery}
@@ -906,7 +912,7 @@ function ConfigSection({ showToast }) {
             <input
               value={config.site_copyright}
               onChange={(e) => setConfig({ ...config, site_copyright: e.target.value })}
-              placeholder={`© ${config.site_title || 'XA-Nav'}`}
+              placeholder={`© ${config.site_title || 'XA-Nav'} · v${packageInfo.version}`}
               className={inputCls}
             />
           </FormField>
