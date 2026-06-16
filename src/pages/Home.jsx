@@ -1,5 +1,5 @@
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { requestJson, formatCategoryTree } from '../lib/api.js';
 import { t, LANGS } from '../lib/i18n.js';
 import packageInfo from '../../package.json';
@@ -48,7 +48,7 @@ function prepareBookmark(bookmark) {
   };
 }
 
-const BookmarkCard = memo(function BookmarkCard({ bookmark, isDark, faviconApi }) {
+const BookmarkCard = memo(function BookmarkCard({ bookmark, isDark, faviconApi, onContextMenu }) {
   const initialFaviconUrl = useMemo(() => getFaviconUrl(bookmark, faviconApi), [bookmark, faviconApi]);
   const [imgSrc, setImgSrc] = useState(initialFaviconUrl);
   const [errCount, setErrCount] = useState(0);
@@ -68,7 +68,7 @@ const BookmarkCard = memo(function BookmarkCard({ bookmark, isDark, faviconApi }
   }, [bookmark, errCount, faviconApi]);
 
   return (
-    <a href={bookmark.url} target="_blank" rel="noreferrer"
+    <a href={bookmark.url} target="_blank" rel="noreferrer" onContextMenu={onContextMenu ? (e) => onContextMenu(e, bookmark) : undefined}
       className={`group flex flex-col gap-3 rounded-2xl border p-4 text-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${
         isDark ? 'border-slate-800 bg-slate-900/60 text-slate-200 hover:border-sky-500/50 hover:bg-slate-900 hover:shadow-sky-500/10'
                : 'border-slate-200/80 bg-white text-slate-900 hover:border-sky-300/60 hover:shadow-sky-100/80'}`}>
@@ -95,7 +95,7 @@ const BookmarkCard = memo(function BookmarkCard({ bookmark, isDark, faviconApi }
   );
 });
 
-function CategorySection({ cat, isDark, activeChild, onSetActiveChild, lang, faviconApi }) {
+function CategorySection({ cat, isDark, activeChild, onSetActiveChild, lang, faviconApi, onBookmarkContextMenu }) {
   const children = cat.children || [];
   const allItems = cat._items || cat._defaultItems || [];
 
@@ -142,7 +142,7 @@ function CategorySection({ cat, isDark, activeChild, onSetActiveChild, lang, fav
         })}
       </div>
       <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }} className="grid gap-3">
-        {visibleItems.map((bookmark) => <BookmarkCard key={bookmark.id} bookmark={bookmark} isDark={isDark} faviconApi={faviconApi} />)}
+        {visibleItems.map((bookmark) => <BookmarkCard key={bookmark.id} bookmark={bookmark} isDark={isDark} faviconApi={faviconApi} onContextMenu={onBookmarkContextMenu} />)}
       </div>
     </section>
   );
@@ -189,17 +189,18 @@ function FriendLinksSection({ friendLinks, isDark, lang, faviconApi }) {
   );
 }
 
-function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, fetching, saving, error, onChange, onFetchSite, onSubmit, onClose }) {
+function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, fetching, saving, error, mode = 'create', onChange, onFetchSite, onSubmit, onClose }) {
   const inputCls = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition ${isDark ? 'border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/30' : 'border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400/20'}`;
   const labelCls = `mb-1.5 block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`;
+  const isEdit = mode === 'edit';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
       <form onSubmit={onSubmit} className={`max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border p-5 shadow-2xl ${isDark ? 'border-slate-800 bg-slate-950 text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
         <div className={`mb-4 flex items-center justify-between border-b pb-3 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
           <div>
-            <h2 className="text-base font-semibold">{t(lang, 'quickAdd.title')}</h2>
-            <p className={`mt-1 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t(lang, 'quickAdd.subtitle')}</p>
+            <h2 className="text-base font-semibold">{isEdit ? '修改网址' : t(lang, 'quickAdd.title')}</h2>
+            <p className={`mt-1 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{isEdit ? '在首页快速修改当前网址收藏' : t(lang, 'quickAdd.subtitle')}</p>
           </div>
           <button type="button" onClick={onClose} className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
             <i className="fa-solid fa-xmark" />
@@ -262,7 +263,7 @@ function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, f
         <div className={`mt-5 flex justify-end gap-2 border-t pt-4 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
           <button type="button" onClick={onClose} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{t(lang, 'common.cancel')}</button>
           <button type="submit" disabled={saving} className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60">
-            {saving ? t(lang, 'quickAdd.saving') : t(lang, 'quickAdd.submit')}
+            {saving ? t(lang, 'quickAdd.saving') : isEdit ? '保存修改' : t(lang, 'quickAdd.submit')}
           </button>
         </div>
       </form>
@@ -272,6 +273,7 @@ function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, f
 
 export default function Home({ isDark, admin, theme, themeOptions, onThemeChange, onLogout, lang, onLangChange, siteTitle, siteLogo, siteCopyright, faviconApi }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [categories, setCategories] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [friendLinks, setFriendLinks] = useState([]);
@@ -293,10 +295,26 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   const [quickAddFetching, setQuickAddFetching] = useState(false);
   const [quickAddSaving, setQuickAddSaving] = useState(false);
   const [quickAddError, setQuickAddError] = useState('');
+  const [quickAddMode, setQuickAddMode] = useState('create');
+  const [editingBookmarkId, setEditingBookmarkId] = useState(null);
+  const [bookmarkMenu, setBookmarkMenu] = useState(null);
 
   const setActiveCat = useCallback((catId, childId) => {
     setActiveChildMap((p) => ({ ...p, [catId]: childId === null ? null : Number(childId) }));
   }, []);
+
+  const scrollToCategory = useCallback((catId, smooth = true) => {
+    if (!catId) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(`cat-${catId}`)?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+    });
+  }, []);
+
+  const goToCategory = useCallback((catId, childId = null) => {
+    setActiveCat(catId, childId);
+    navigate({ hash: `#cat-${catId}` }, { replace: false });
+    scrollToCategory(catId);
+  }, [navigate, scrollToCategory, setActiveCat]);
 
   const SEARCH_OPTIONS = [
     { key: 'local',  label: t(lang, 'search.local'),  placeholder: t(lang, 'search.local.placeholder'),  iconClass: 'fa-solid fa-magnifying-glass' },
@@ -430,6 +448,17 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     return [{ ...defaultCategory, _defaultItems: [], _items: [] }];
   }, [visibleCats, defaultCategory]);
 
+  useEffect(() => {
+    if (!location.hash || visibleCats.length === 0) return;
+    const match = decodeURIComponent(location.hash).match(/^#cat-(\d+)$/);
+    if (!match) return;
+    const catId = Number(match[1]);
+    const exists = visibleCats.some((cat) => Number(cat.id) === catId);
+    if (!exists) return;
+    setActiveCat(catId, null);
+    scrollToCategory(catId, false);
+  }, [location.hash, visibleCats, scrollToCategory, setActiveCat]);
+
   const currentSearch = SEARCH_OPTIONS.find((o) => o.key === searchMode) || SEARCH_OPTIONS[0];
   const handleSearch = () => {
     if (searchMode === 'local' || !query.trim()) return;
@@ -441,9 +470,35 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   }, [defaultCatId]);
 
   const openQuickAdd = () => {
+    setQuickAddMode('create');
+    setEditingBookmarkId(null);
     setQuickAddForm({ ...EMPTY_QUICK_BOOKMARK, categoryId: defaultCatId });
     setQuickAddError('');
     setQuickAddOpen(true);
+  };
+
+  const openBookmarkEdit = (bookmark) => {
+    setBookmarkMenu(null);
+    setQuickAddMode('edit');
+    setEditingBookmarkId(bookmark.id);
+    setQuickAddForm({
+      title: bookmark.title || '',
+      url: bookmark.url || '',
+      description: bookmark.description || '',
+      favicon: bookmark.favicon || '',
+      categoryId: bookmark.categoryId ? String(bookmark.categoryId) : defaultCatId,
+      tags: bookmark.tags || '',
+      sortOrder: Number(bookmark.sortOrder) || 0,
+      enabled: bookmark.enabled === 0 ? 0 : 1,
+    });
+    setQuickAddError('');
+    setQuickAddOpen(true);
+  };
+
+  const closeQuickAdd = () => {
+    setQuickAddOpen(false);
+    setQuickAddMode('create');
+    setEditingBookmarkId(null);
   };
 
   const updateQuickAddForm = (patch) => {
@@ -484,16 +539,51 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     setQuickAddSaving(true);
     setQuickAddError('');
     try {
-      await requestJson('/api/admin/bookmarks', { method: 'POST', body: JSON.stringify(quickAddForm) });
+      if (quickAddMode === 'edit' && editingBookmarkId) {
+        await requestJson(`/api/admin/bookmarks/${editingBookmarkId}`, { method: 'PUT', body: JSON.stringify(quickAddForm) });
+      } else {
+        await requestJson('/api/admin/bookmarks', { method: 'POST', body: JSON.stringify(quickAddForm) });
+      }
       await loadHomeData(false);
-      setQuickAddOpen(false);
+      closeQuickAdd();
       setQuickAddForm({ ...EMPTY_QUICK_BOOKMARK, categoryId: defaultCatId });
     } catch (err) {
-      setQuickAddError(err.message || t(lang, 'quickAdd.addFail'));
+      setQuickAddError(err.message || (quickAddMode === 'edit' ? '修改失败' : t(lang, 'quickAdd.addFail')));
     } finally {
       setQuickAddSaving(false);
     }
   };
+
+  const handleBookmarkContextMenu = useCallback((e, bookmark) => {
+    if (!admin) return;
+    e.preventDefault();
+    setBookmarkMenu({ bookmark, x: e.clientX, y: e.clientY });
+  }, [admin]);
+
+  const deleteBookmark = async (bookmark) => {
+    setBookmarkMenu(null);
+    if (!window.confirm(`确定删除「${bookmark.title}」吗？`)) return;
+    try {
+      await requestJson(`/api/admin/bookmarks/${bookmark.id}`, { method: 'DELETE' });
+      await loadHomeData(false);
+    } catch (err) {
+      window.alert(err.message || '删除失败');
+    }
+  };
+
+  useEffect(() => {
+    if (!bookmarkMenu) return;
+    const close = () => setBookmarkMenu(null);
+    const onKeyDown = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('scroll', close, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('scroll', close, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [bookmarkMenu]);
 
   const bg = isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
   const sidebarBg = isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200/80';
@@ -630,7 +720,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
 
               return (
                 <div key={cat.id} onMouseEnter={() => setHoveredCat(cat.id)} onMouseLeave={() => setHoveredCat(null)}>
-                  <button type="button" onClick={() => { setActiveCat(cat.id, null); document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                  <button type="button" onClick={() => goToCategory(cat.id, null)}
                     className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}>
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs ${isDark ? 'bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-sky-400' : 'bg-slate-100 text-slate-500 group-hover:bg-sky-50 group-hover:text-sky-600'}`}>
                       <i className={icon} />
@@ -646,7 +736,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
                         if (cnt === 0) return null;
                         return (
                           <button key={child.id} type="button"
-                            onClick={() => { setActiveCat(cat.id, child.id); setTimeout(() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+                            onClick={() => goToCategory(cat.id, child.id)}
                             className={`group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs transition ${isDark ? 'text-slate-500 hover:bg-slate-800 hover:text-sky-400' : 'text-slate-400 hover:bg-sky-50 hover:text-sky-600'}`}>
                             <i className={`${getCategoryIcon(child)} w-4 text-center text-xs ${isDark ? 'text-slate-700 group-hover:text-sky-400' : 'text-slate-300 group-hover:text-sky-600'}`} />
                             <span className="flex-1 truncate">{child.name}</span>
@@ -682,6 +772,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
                   activeChild={activeChildMap[cat.id] ?? null}
                   onSetActiveChild={(childId) => setActiveCat(cat.id, childId)}
                   faviconApi={faviconApi}
+                  onBookmarkContextMenu={admin ? handleBookmarkContextMenu : undefined}
                 />
               ))
             )}
@@ -706,8 +797,24 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
           onChange={updateQuickAddForm}
           onFetchSite={fetchQuickAddSiteInfo}
           onSubmit={submitQuickAdd}
-          onClose={() => setQuickAddOpen(false)}
+          mode={quickAddMode}
+          onClose={closeQuickAdd}
         />
+      )}
+
+      {bookmarkMenu && (
+        <div
+          className={`fixed z-50 w-36 overflow-hidden rounded-xl border py-1 shadow-xl ${menuBg}`}
+          style={{ left: bookmarkMenu.x, top: bookmarkMenu.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button type="button" onClick={() => openBookmarkEdit(bookmarkMenu.bookmark)} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${menuItem}`}>
+            <i className="fa-solid fa-pen-to-square w-4 text-center text-xs" />修改
+          </button>
+          <button type="button" onClick={() => deleteBookmark(bookmarkMenu.bookmark)} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${isDark ? 'text-rose-400 hover:bg-slate-800' : 'text-rose-500 hover:bg-rose-50'}`}>
+            <i className="fa-solid fa-trash w-4 text-center text-xs" />删除
+          </button>
+        </div>
       )}
 
       {(admin || showScrollTop) && (
