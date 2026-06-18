@@ -836,7 +836,16 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
             )}
             <FriendLinksSection friendLinks={friendLinks} isDark={isDark} lang={lang} faviconApi={faviconApi} />
             <footer className={`mt-8 pb-2 text-center text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-              {siteCopyright || `© ${siteTitle} · v${packageInfo.version}`}
+              <span>{siteCopyright || `© ${siteTitle} · v${packageInfo.version}`}</span>
+              <span className="mx-2">·</span>
+              <a
+                href="https://github.com/awinds/xa-nav"
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-1 transition ${isDark ? 'hover:text-sky-400' : 'hover:text-sky-600'}`}
+              >
+                <i className="fa-brands fa-github" /> GitHub
+              </a>
             </footer>
           </div>
         </main>
