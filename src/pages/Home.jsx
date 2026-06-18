@@ -189,10 +189,16 @@ function FriendLinksSection({ friendLinks, isDark, lang, faviconApi }) {
   );
 }
 
-function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, fetching, saving, error, mode = 'create', onChange, onFetchSite, onSubmit, onClose }) {
+function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, faviconApi, fetching, saving, error, mode = 'create', onChange, onFetchSite, onSubmit, onClose }) {
   const inputCls = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition ${isDark ? 'border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/30' : 'border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400/20'}`;
   const labelCls = `mb-1.5 block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`;
   const isEdit = mode === 'edit';
+  const faviconPreviewUrl = useMemo(() => getFaviconUrl({ url: form.url, favicon: form.favicon }, faviconApi), [form.url, form.favicon, faviconApi]);
+  const [faviconPreviewFailed, setFaviconPreviewFailed] = useState(false);
+
+  useEffect(() => {
+    setFaviconPreviewFailed(false);
+  }, [faviconPreviewUrl]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
@@ -241,7 +247,14 @@ function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, f
 
           <div>
             <label className={labelCls}>{t(lang, 'quickAdd.favicon')}</label>
-            <input value={form.favicon} onChange={(e) => onChange({ favicon: e.target.value })} className={inputCls} placeholder={t(lang, 'quickAdd.favicon.placeholder')} />
+            <div className="flex gap-2">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
+                {faviconPreviewUrl && !faviconPreviewFailed
+                  ? <img src={faviconPreviewUrl} alt="" className="h-6 w-6 rounded object-contain" loading="lazy" decoding="async" onError={() => setFaviconPreviewFailed(true)} />
+                  : <i className="fa-solid fa-globe text-sm text-slate-400" />}
+              </span>
+              <input value={form.favicon} onChange={(e) => onChange({ favicon: e.target.value })} className={inputCls} placeholder={t(lang, 'quickAdd.favicon.placeholder')} />
+            </div>
           </div>
 
           <div>
@@ -280,6 +293,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   const [query, setQuery] = useState('');
   const [searchMode, setSearchMode] = useState('local');
   const contentRef = useRef(null);
+  const sidebarRef = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const inputRef = useRef(null);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -298,6 +312,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   const [quickAddMode, setQuickAddMode] = useState('create');
   const [editingBookmarkId, setEditingBookmarkId] = useState(null);
   const [bookmarkMenu, setBookmarkMenu] = useState(null);
+  const [childMenu, setChildMenu] = useState(null);
 
   const setActiveCat = useCallback((catId, childId) => {
     setActiveChildMap((p) => ({ ...p, [catId]: childId === null ? null : Number(childId) }));
@@ -315,6 +330,18 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     navigate({ hash: `#cat-${catId}` }, { replace: false });
     scrollToCategory(catId);
   }, [navigate, scrollToCategory, setActiveCat]);
+
+  const openChildMenu = useCallback((cat, target) => {
+    const sidebarRect = sidebarRef.current?.getBoundingClientRect();
+    const itemRect = target.getBoundingClientRect();
+    setHoveredCat(cat.id);
+    setChildMenu({ cat, top: itemRect.top - (sidebarRect?.top || 0) });
+  }, []);
+
+  const closeChildMenu = useCallback(() => {
+    setHoveredCat(null);
+    setChildMenu(null);
+  }, []);
 
   const SEARCH_OPTIONS = [
     { key: 'local',  label: t(lang, 'search.local'),  placeholder: t(lang, 'search.local.placeholder'),  iconClass: 'fa-solid fa-magnifying-glass' },
@@ -495,11 +522,23 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     setQuickAddOpen(true);
   };
 
-  const closeQuickAdd = () => {
+  const closeQuickAdd = useCallback(() => {
     setQuickAddOpen(false);
     setQuickAddMode('create');
     setEditingBookmarkId(null);
-  };
+  }, []);
+
+  const validateAdminSession = useCallback(async () => {
+    try {
+      const res = await requestJson('/api/admin/me');
+      if (res.authenticated) return true;
+    } catch {}
+    setBookmarkMenu(null);
+    closeQuickAdd();
+    window.alert('登录已失效，请重新登录');
+    navigate('/login');
+    return false;
+  }, [closeQuickAdd, navigate]);
 
   const updateQuickAddForm = (patch) => {
     setQuickAddForm((form) => ({ ...form, ...patch }));
@@ -554,14 +593,21 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     }
   };
 
-  const handleBookmarkContextMenu = useCallback((e, bookmark) => {
+  const handleBookmarkContextMenu = useCallback(async (e, bookmark) => {
     if (!admin) return;
     e.preventDefault();
+    if (!(await validateAdminSession())) return;
     setBookmarkMenu({ bookmark, x: e.clientX, y: e.clientY });
-  }, [admin]);
+  }, [admin, validateAdminSession]);
+
+  const handleOpenBookmarkEdit = async (bookmark) => {
+    if (!(await validateAdminSession())) return;
+    openBookmarkEdit(bookmark);
+  };
 
   const deleteBookmark = async (bookmark) => {
     setBookmarkMenu(null);
+    if (!(await validateAdminSession())) return;
     if (!window.confirm(`确定删除「${bookmark.title}」吗？`)) return;
     try {
       await requestJson(`/api/admin/bookmarks/${bookmark.id}`, { method: 'DELETE' });
@@ -702,7 +748,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarBg} hidden w-56 shrink-0 border-r md:flex md:flex-col xl:w-64`}>
+        <aside ref={sidebarRef} onMouseLeave={closeChildMenu} className={`${sidebarBg} relative hidden w-56 shrink-0 border-r md:flex md:flex-col xl:w-64`}>
           <div className="flex-1 overflow-y-auto p-3">
             <div className={`mb-1 px-3 py-2 text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
               {t(lang, 'category.label')}
@@ -719,7 +765,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
               }
 
               return (
-                <div key={cat.id} onMouseEnter={() => setHoveredCat(cat.id)} onMouseLeave={() => setHoveredCat(null)}>
+                <div key={cat.id} onMouseEnter={(e) => { if (hasChildren) openChildMenu(cat, e.currentTarget); else closeChildMenu(); }}>
                   <button type="button" onClick={() => goToCategory(cat.id, null)}
                     className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all ${isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}>
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs ${isDark ? 'bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-sky-400' : 'bg-slate-100 text-slate-500 group-hover:bg-sky-50 group-hover:text-sky-600'}`}>
@@ -729,27 +775,39 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
                     <span className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'}`}>{totalCount}</span>
                     {hasChildren && <i className={`fa-solid fa-chevron-right text-xs transition-transform duration-200 ${isHovered ? 'rotate-90 text-sky-400' : isDark ? 'text-slate-700' : 'text-slate-300'}`} />}
                   </button>
-                  {hasChildren && isHovered && (
-                    <div className="ml-4 mt-0.5 space-y-0.5 pb-1">
-                      {cat.children.map((child) => {
-                        const cnt = childCounts.get(Number(child.id)) || 0;
-                        if (cnt === 0) return null;
-                        return (
-                          <button key={child.id} type="button"
-                            onClick={() => goToCategory(cat.id, child.id)}
-                            className={`group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs transition ${isDark ? 'text-slate-500 hover:bg-slate-800 hover:text-sky-400' : 'text-slate-400 hover:bg-sky-50 hover:text-sky-600'}`}>
-                            <i className={`${getCategoryIcon(child)} w-4 text-center text-xs ${isDark ? 'text-slate-700 group-hover:text-sky-400' : 'text-slate-300 group-hover:text-sky-600'}`} />
-                            <span className="flex-1 truncate">{child.name}</span>
-                            <span className={`tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>{cnt}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
+          {childMenu && (() => {
+            const childCounts = new Map();
+            for (const bookmark of childMenu.cat._items || []) {
+              const key = Number(bookmark.categoryId);
+              childCounts.set(key, (childCounts.get(key) || 0) + 1);
+            }
+            const visibleChildren = (childMenu.cat.children || []).filter((child) => (childCounts.get(Number(child.id)) || 0) > 0);
+            if (visibleChildren.length === 0) return null;
+            return (
+              <div
+                className={`absolute left-full z-50 ml-1 w-48 overflow-hidden rounded-xl border py-1 shadow-xl ${menuBg}`}
+                style={{ top: childMenu.top }}
+                onMouseEnter={() => setHoveredCat(childMenu.cat.id)}
+              >
+                {visibleChildren.map((child) => {
+                  const cnt = childCounts.get(Number(child.id)) || 0;
+                  return (
+                    <button key={child.id} type="button"
+                      onClick={() => goToCategory(childMenu.cat.id, child.id)}
+                      className={`group flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition ${menuItem}`}>
+                      <i className={`${getCategoryIcon(child)} w-4 text-center text-xs ${isDark ? 'text-slate-600 group-hover:text-sky-400' : 'text-slate-300 group-hover:text-sky-600'}`} />
+                      <span className="flex-1 truncate">{child.name}</span>
+                      <span className={`tabular-nums ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>{cnt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </aside>
 
         {/* Main */}
@@ -791,6 +849,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
           form={quickAddForm}
           categories={quickAddCategoryOptions}
           defaultCatId={defaultCatId}
+          faviconApi={faviconApi}
           fetching={quickAddFetching}
           saving={quickAddSaving}
           error={quickAddError}
@@ -808,7 +867,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
           style={{ left: bookmarkMenu.x, top: bookmarkMenu.y }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <button type="button" onClick={() => openBookmarkEdit(bookmarkMenu.bookmark)} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${menuItem}`}>
+          <button type="button" onClick={() => handleOpenBookmarkEdit(bookmarkMenu.bookmark)} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${menuItem}`}>
             <i className="fa-solid fa-pen-to-square w-4 text-center text-xs" />修改
           </button>
           <button type="button" onClick={() => deleteBookmark(bookmarkMenu.bookmark)} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${isDark ? 'text-rose-400 hover:bg-slate-800' : 'text-rose-500 hover:bg-rose-50'}`}>
