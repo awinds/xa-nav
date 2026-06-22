@@ -91,7 +91,7 @@ function AppShell() {
     setAdmin(null);
   };
 
-  const sharedProps = { isDark, admin, theme, themeOptions, onThemeChange: setTheme, onLogout: handleLogout, lang, onLangChange: handleLangChange, siteTitle, siteLogo, siteCopyright, faviconApi };
+  const sharedProps = { isDark, admin, theme, themeOptions, onThemeChange: setTheme, onLogout: handleLogout, onAdminExpired: () => setAdmin(null), lang, onLangChange: handleLangChange, siteTitle, siteLogo, siteCopyright, faviconApi };
 
   return (
     <div className={`${appBg} min-h-screen`}>

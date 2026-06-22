@@ -284,7 +284,7 @@ function QuickAddBookmarkModal({ isDark, lang, form, categories, defaultCatId, f
   );
 }
 
-export default function Home({ isDark, admin, theme, themeOptions, onThemeChange, onLogout, lang, onLangChange, siteTitle, siteLogo, siteCopyright, faviconApi }) {
+export default function Home({ isDark, admin, theme, themeOptions, onThemeChange, onLogout, onAdminExpired, lang, onLangChange, siteTitle, siteLogo, siteCopyright, faviconApi }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [categories, setCategories] = useState([]);
@@ -294,6 +294,7 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
   const [searchMode, setSearchMode] = useState('local');
   const contentRef = useRef(null);
   const sidebarRef = useRef(null);
+  const pendingCategoryHashRef = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const inputRef = useRef(null);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -327,7 +328,9 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
 
   const goToCategory = useCallback((catId, childId = null) => {
     setActiveCat(catId, childId);
-    navigate({ hash: `#cat-${catId}` }, { replace: false });
+    const nextHash = `#cat-${catId}`;
+    pendingCategoryHashRef.current = nextHash;
+    navigate({ hash: nextHash }, { replace: false });
     scrollToCategory(catId);
   }, [navigate, scrollToCategory, setActiveCat]);
 
@@ -482,7 +485,11 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     const catId = Number(match[1]);
     const exists = visibleCats.some((cat) => Number(cat.id) === catId);
     if (!exists) return;
-    setActiveCat(catId, null);
+    if (pendingCategoryHashRef.current === location.hash) {
+      pendingCategoryHashRef.current = null;
+    } else {
+      setActiveCat(catId, null);
+    }
     scrollToCategory(catId, false);
   }, [location.hash, visibleCats, scrollToCategory, setActiveCat]);
 
@@ -535,10 +542,11 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
     } catch {}
     setBookmarkMenu(null);
     closeQuickAdd();
-    window.alert('登录已失效，请重新登录');
+    window.alert(t(lang, 'home.sessionExpired'));
+    onAdminExpired?.();
     navigate('/login');
     return false;
-  }, [closeQuickAdd, navigate]);
+  }, [closeQuickAdd, lang, navigate, onAdminExpired]);
 
   const updateQuickAddForm = (patch) => {
     setQuickAddForm((form) => ({ ...form, ...patch }));
@@ -644,19 +652,19 @@ export default function Home({ isDark, admin, theme, themeOptions, onThemeChange
       <header className={`${headerBg} shrink-0 border-b shadow-sm`}>
         <div className="flex h-14 items-stretch">
           {/* Logo */}
-          <div className={`hidden w-56 shrink-0 items-center gap-2.5 border-r px-4 md:flex xl:w-64 ${isDark ? 'border-slate-800' : 'border-slate-200/80'}`}>
+          <Link to="/" className={`hidden w-56 shrink-0 items-center gap-2.5 border-r px-4 transition ${isDark ? 'border-slate-800 hover:bg-slate-800/60' : 'border-slate-200/80 hover:bg-slate-50'} md:flex xl:w-64`}>
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg text-sky-500">
               {siteLogo ? <img src={siteLogo} alt="" className="h-full w-full object-cover" /> : <i className="fa-solid fa-bookmark text-xs" />}
             </div>
             <span className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{siteTitle}</span>
-          </div>
+          </Link>
 
           {/* Search */}
           <div className="flex flex-1 items-center gap-3 px-4 xl:px-6">
             <div className="flex shrink-0 items-center gap-2 md:hidden">
-              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg text-sky-500">
+              <Link to="/" className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg text-sky-500 transition ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}>
                 {siteLogo ? <img src={siteLogo} alt="" className="h-full w-full object-cover" /> : <i className="fa-solid fa-bookmark text-xs" />}
-              </div>
+              </Link>
             </div>
             <div className={`hidden items-center gap-0.5 rounded-lg border p-0.5 sm:flex ${isDark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-slate-100'}`}>
               {SEARCH_OPTIONS.map((opt) => (
